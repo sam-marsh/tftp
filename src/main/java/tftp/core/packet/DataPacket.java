@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
  */
 public class DataPacket extends TFTPPacket {
 
-    private static final int DATA_OFFSET = 4;
+    public static final int DATA_OFFSET = 4;
 
     private final short blockNumber;
     private final int dataLength;
@@ -39,7 +39,11 @@ public class DataPacket extends TFTPPacket {
         return blockNumber;
     }
 
-    public boolean isFinal() {
+    public int getDataLength() {
+        return dataLength;
+    }
+
+    public boolean isFinalPacket() {
         return dataLength < Configuration.MAX_DATA_LENGTH;
     }
 

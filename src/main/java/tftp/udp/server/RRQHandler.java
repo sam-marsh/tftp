@@ -96,9 +96,17 @@ public class RRQHandler implements Runnable {
                             }
 
                         } catch (TFTPException e) {
+                            log.warning("invalid packet received, ignoring");
                             ++invalids;
                         }
                     }
+
+                    if (timeouts == Configuration.MAX_TIMEOUTS) {
+                        throw new IOException("timeout");
+                    } else if (invalids == Configuration.MAX_INVALIDS) {
+                        throw new IOException("invalid");
+                    }
+
                 }
 
             } catch (FileNotFoundException e) {

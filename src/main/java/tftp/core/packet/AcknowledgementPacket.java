@@ -15,7 +15,7 @@ public class AcknowledgementPacket extends TFTPPacket {
     private final byte[] bytes;
 
     public AcknowledgementPacket(short blockNumber) {
-        this.blockNumber = (short) blockNumber;
+        this.blockNumber = blockNumber;
         this.bytes = new byte[PACKET_LENGTH];
 
         ByteBuffer buffer = ByteBuffer.wrap(bytes);

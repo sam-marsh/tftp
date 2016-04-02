@@ -4,6 +4,7 @@ import tftp.core.Configuration;
 import tftp.core.TFTPException;
 import tftp.core.packet.ReadRequestPacket;
 import tftp.core.packet.TFTPPacket;
+import tftp.core.packet.WriteRequestPacket;
 import tftp.udp.util.UDPUtil;
 
 import java.io.IOException;
@@ -56,7 +57,11 @@ public class TFTPServer extends Thread {
                             ));
                             break;
                         case WRITE_REQUEST:
-                            executor.submit(new WRQHandler());
+                            executor.submit(new WRQHandler(
+                                    receivePacket.getAddress(),
+                                    receivePacket.getPort(),
+                                    (WriteRequestPacket) packet
+                            ));
                             break;
                         default:
                             LOG.warning("received packet " + packet + ", ignoring");
