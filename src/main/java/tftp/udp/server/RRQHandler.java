@@ -1,8 +1,8 @@
 package tftp.udp.server;
 
-import jdk.nashorn.internal.runtime.regexp.joni.Config;
 import tftp.core.Configuration;
 import tftp.core.ErrorType;
+import tftp.core.Mode;
 import tftp.core.TFTPException;
 import tftp.core.packet.*;
 import tftp.udp.util.UDPUtil;
@@ -10,11 +10,14 @@ import tftp.udp.util.UDPUtil;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketTimeoutException;
 import java.util.logging.Logger;
 
 /**
- * @author Sam Marsh
+ * Handles responses to read requests from clients.
  */
 public class RRQHandler implements Runnable {
 
@@ -40,6 +43,13 @@ public class RRQHandler implements Runnable {
         try {
             DatagramSocket socket = new DatagramSocket();
             socket.setSoTimeout(Configuration.TIMEOUT);
+
+            if (rrq.getMode() != Mode.OCTET) {
+                ErrorPacket error = new ErrorPacket(ErrorType.UNDEFINED, "unsupported mode: " + rrq.getMode());
+                socket.send(UDPUtil.toDatagram(error, clientAddress, clientPort));
+                log.severe("unsupported mode: " + rrq.getMode());
+                return;
+            }
 
             byte[] receiveBuffer = new byte[Configuration.MAX_PACKET_LENGTH];
 
