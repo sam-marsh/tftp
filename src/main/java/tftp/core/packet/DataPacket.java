@@ -1,5 +1,7 @@
 package tftp.core.packet;
 
+import tftp.core.Configuration;
+
 import java.nio.ByteBuffer;
 
 /**
@@ -7,37 +9,53 @@ import java.nio.ByteBuffer;
  */
 public class DataPacket extends TFTPPacket {
 
-    private final short blockNumber;
-    private final byte[] data;
-    private final ByteBuffer buffer;
+    private static final int DATA_OFFSET = 4;
 
-    public DataPacket(short blockNumber, byte[] data) {
+    private final short blockNumber;
+    private final int dataLength;
+    private final byte[] packetBuffer;
+
+    public DataPacket(short blockNumber, byte[] dataBuffer) {
         this.blockNumber = blockNumber;
-        this.data = data;
-        this.buffer = ByteBuffer.allocate(4 + data.length);
+        this.dataLength = dataBuffer.length - DATA_OFFSET;
+        this.packetBuffer = new byte[dataBuffer.length + DATA_OFFSET];
+        ByteBuffer buffer = ByteBuffer.wrap(packetBuffer);
         buffer.putShort(getPacketType().getOpcode());
         buffer.putShort(blockNumber);
-        buffer.put(data);
-        buffer.flip();
+        buffer.put(dataBuffer);
     }
 
-    public DataPacket(ByteBuffer buffer) {
+    public DataPacket(byte[] packetBuffer, int length) {
+        ByteBuffer buffer = ByteBuffer.wrap(packetBuffer);
         buffer.position(2);
-        blockNumber = buffer.getShort();
-        data = new byte[buffer.remaining()];
-        buffer.put(data);
-        buffer.rewind();
-        this.buffer = buffer;
+        this.blockNumber = buffer.getShort();
+        this.dataLength = length - DATA_OFFSET;
+
+        this.packetBuffer = new byte[length];
+        System.arraycopy(packetBuffer, 0, this.packetBuffer, 0, length);
+    }
+
+    public short getBlockNumber() {
+        return blockNumber;
+    }
+
+    public boolean isFinal() {
+        return dataLength < Configuration.MAX_DATA_LENGTH;
     }
 
     @Override
-    public ByteBuffer getRawPacket() {
-        return buffer;
+    public byte[] getPacketBytes() {
+        return packetBuffer;
     }
 
     @Override
     public PacketType getPacketType() {
         return PacketType.DATA;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s[%d]", getPacketType(), getBlockNumber());
     }
 
 }

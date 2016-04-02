@@ -2,6 +2,7 @@ package tftp.core.packet;
 
 import tftp.core.Configuration;
 import tftp.core.Mode;
+import tftp.core.TFTPException;
 import tftp.core.util.StringUtil;
 
 import java.nio.ByteBuffer;
@@ -11,31 +12,49 @@ import java.nio.ByteBuffer;
  */
 public abstract class RequestPacket extends TFTPPacket {
 
-    private final String file;
+    private final String fileName;
     private final Mode mode;
-    private final ByteBuffer buffer;
+    private final byte[] bytes;
 
-    public RequestPacket(String file, Mode mode) {
-        this.file = file;
+    public RequestPacket(String fileName, Mode mode) {
+        this.fileName = fileName;
         this.mode = mode;
-        this.buffer = ByteBuffer.allocate(Configuration.MAX_PACKET_LENGTH);
+
+        byte[] fileNameBytes = StringUtil.getBytes(fileName);
+        byte[] modeBytes = StringUtil.getBytes(mode.getName());
+        this.bytes = new byte[fileNameBytes.length + modeBytes.length + 2];
+
+        ByteBuffer buffer = ByteBuffer.wrap(bytes);
         buffer.putShort(getPacketType().getOpcode());
-        StringUtil.write(file, buffer);
-        StringUtil.write(mode.getName(), buffer);
-        buffer.flip();
+        buffer.put(fileNameBytes);
+        buffer.put(modeBytes);
     }
 
-    public RequestPacket(ByteBuffer buffer) {
-        buffer.position(2);
-        this.file = StringUtil.read(buffer);
-        this.mode = Mode.fromName(StringUtil.read(buffer));
-        buffer.rewind();
-        this.buffer = buffer;
+    public RequestPacket(byte[] bytes, int length) throws TFTPException {
+        this.fileName = StringUtil.getString(bytes, 2);
+
+        int modeStringOffset = 2;
+        while (modeStringOffset != 0 && modeStringOffset < bytes.length) {
+            ++modeStringOffset;
+        }
+        ++modeStringOffset;
+
+        this.mode = Mode.fromName(StringUtil.getString(bytes, modeStringOffset));
+        this.bytes = new byte[length];
+        System.arraycopy(bytes, 0, this.bytes, 0, length);
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public Mode getMode() {
+        return mode;
     }
 
     @Override
-    public ByteBuffer getRawPacket() {
-        return buffer;
+    public byte[] getPacketBytes() {
+        return bytes;
     }
 
 }

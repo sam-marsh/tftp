@@ -1,6 +1,7 @@
 package tftp.core.packet;
 
 import tftp.core.Mode;
+import tftp.core.TFTPException;
 
 import java.nio.ByteBuffer;
 
@@ -9,12 +10,12 @@ import java.nio.ByteBuffer;
  */
 public class WriteRequestPacket extends RequestPacket {
 
-    public WriteRequestPacket(ByteBuffer buffer) {
-        super(buffer);
-    }
-
     public WriteRequestPacket(String file, Mode mode) {
         super(file, mode);
+    }
+
+    public WriteRequestPacket(byte[] bytes, int length) throws TFTPException {
+        super(bytes, length);
     }
 
     @Override

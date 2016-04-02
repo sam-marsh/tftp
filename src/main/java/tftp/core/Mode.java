@@ -24,13 +24,13 @@ public enum Mode {
         return name;
     }
 
-    public static Mode fromName(String name) {
+    public static Mode fromName(String name) throws TFTPException {
         for (Mode mode : values()) {
             if (mode.name.equalsIgnoreCase(name)) {
                 return mode;
             }
         }
-        throw new IllegalArgumentException("no such mode: " + name);
+        throw new TFTPException("no such mode: " + name);
     }
 
 }

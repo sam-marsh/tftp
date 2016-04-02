@@ -2,6 +2,7 @@ package tftp.core.packet;
 
 import tftp.core.Configuration;
 import tftp.core.ErrorType;
+import tftp.core.TFTPException;
 import tftp.core.util.StringUtil;
 
 import java.nio.ByteBuffer;
@@ -13,24 +14,28 @@ public class ErrorPacket extends TFTPPacket {
 
     private final ErrorType errorType;
     private final String message;
-    private final ByteBuffer buffer;
+    private final byte[] bytes;
 
     public ErrorPacket(ErrorType errorType, String message) {
         this.errorType = errorType;
         this.message = message;
-        this.buffer = ByteBuffer.allocate(Configuration.MAX_PACKET_LENGTH);
+
+        byte[] messageBytes = StringUtil.getBytes(message);
+        this.bytes = new byte[messageBytes.length + 4];
+
+        ByteBuffer buffer = ByteBuffer.wrap(bytes);
         buffer.putShort(getPacketType().getOpcode());
         buffer.putShort(errorType.getValue());
-        StringUtil.write(message, buffer);
-        buffer.flip();
+        buffer.put(messageBytes);
     }
 
-    public ErrorPacket(ByteBuffer buffer) {
+    public ErrorPacket(byte[] bytes, int length) throws TFTPException {
+        ByteBuffer buffer = ByteBuffer.wrap(bytes);
         buffer.position(2);
         this.errorType = ErrorType.fromValue(buffer.getShort());
-        this.message = StringUtil.read(buffer);
-        buffer.rewind();
-        this.buffer = buffer;
+        this.message = StringUtil.getString(bytes, 4);
+        this.bytes = new byte[length];
+        System.arraycopy(bytes, 0, this.bytes, 0, length);
     }
 
     public ErrorType getErrorType() {
@@ -42,8 +47,8 @@ public class ErrorPacket extends TFTPPacket {
     }
 
     @Override
-    public ByteBuffer getRawPacket() {
-        return buffer;
+    public byte[] getPacketBytes() {
+        return bytes;
     }
 
     @Override

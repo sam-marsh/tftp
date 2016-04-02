@@ -1,5 +1,7 @@
 package tftp.core.packet;
 
+import tftp.core.Configuration;
+
 import java.nio.ByteBuffer;
 
 /**
@@ -9,22 +11,24 @@ public class AcknowledgementPacket extends TFTPPacket {
 
     private static final int PACKET_LENGTH = 4;
 
-    private final int blockNumber;
-    private final ByteBuffer buffer;
+    private final short blockNumber;
+    private final byte[] bytes;
 
     public AcknowledgementPacket(short blockNumber) {
-        this.blockNumber = blockNumber;
-        this.buffer = ByteBuffer.allocate(PACKET_LENGTH);
+        this.blockNumber = (short) blockNumber;
+        this.bytes = new byte[PACKET_LENGTH];
+
+        ByteBuffer buffer = ByteBuffer.wrap(bytes);
         buffer.putShort(getPacketType().getOpcode());
         buffer.putShort(blockNumber);
-        buffer.flip();
     }
 
-    public AcknowledgementPacket(ByteBuffer buffer) {
+    public AcknowledgementPacket(byte[] packetData, int length) {
+        ByteBuffer buffer = ByteBuffer.wrap(packetData);
         buffer.position(2);
         this.blockNumber = buffer.getShort();
-        buffer.rewind();
-        this.buffer = buffer;
+        this.bytes = new byte[length];
+        System.arraycopy(packetData, 0, bytes, 0, length);
     }
 
     public int getBlockNumber() {
@@ -32,8 +36,8 @@ public class AcknowledgementPacket extends TFTPPacket {
     }
 
     @Override
-    public ByteBuffer getRawPacket() {
-        return buffer;
+    public byte[] getPacketBytes() {
+        return bytes;
     }
 
     @Override
