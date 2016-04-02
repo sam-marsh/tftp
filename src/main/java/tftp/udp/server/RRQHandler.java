@@ -5,6 +5,7 @@ import tftp.core.ErrorType;
 import tftp.core.Mode;
 import tftp.core.TFTPException;
 import tftp.core.packet.*;
+import tftp.udp.FileSender;
 import tftp.udp.util.UDPUtil;
 
 import java.io.FileInputStream;
@@ -51,73 +52,9 @@ public class RRQHandler implements Runnable {
                 return;
             }
 
-            byte[] receiveBuffer = new byte[Configuration.MAX_PACKET_LENGTH];
-
-            byte[] fileBuffer = new byte[Configuration.MAX_DATA_LENGTH];
-
-            DataPacket dataPacket = null;
-
             try (FileInputStream fis = new FileInputStream(rrq.getFileName())) {
 
-                short blockNumber = 1;
-
-                int read;
-                while ((read = fis.read(fileBuffer)) != -1 || dataPacket == null) {
-
-                    if (read == -1) {
-                        dataPacket = new DataPacket(blockNumber, fileBuffer, 0);
-                    } else {
-                        dataPacket = new DataPacket(blockNumber, fileBuffer, read);
-                    }
-
-                    DatagramPacket datagram = UDPUtil.toDatagram(dataPacket, clientAddress, clientPort);
-
-                    DatagramPacket rcvDatagram = new DatagramPacket(receiveBuffer, receiveBuffer.length);
-
-                    int timeouts = 0;
-                    int invalids = 0;
-
-                    while (timeouts < Configuration.MAX_TIMEOUTS && invalids < Configuration.MAX_INVALIDS) {
-
-                        socket.send(datagram);
-                        try {
-                            socket.receive(rcvDatagram);
-                        } catch (SocketTimeoutException timeout) {
-                            log.warning("timed out, resending " + dataPacket);
-                            ++timeouts;
-                            continue;
-                        }
-
-                        try {
-                            TFTPPacket received = UDPUtil.fromDatagram(rcvDatagram);
-
-                            if (received instanceof AcknowledgementPacket) {
-                                AcknowledgementPacket ack = (AcknowledgementPacket) received;
-                                log.info("received " + ack);
-
-                                if (ack.getBlockNumber() == blockNumber) {
-                                    ++blockNumber;
-                                    break;
-                                }
-
-                            } else if (received instanceof ErrorPacket) {
-                                log.severe("error packet received: " + received);
-                                return;
-                            }
-
-                        } catch (TFTPException e) {
-                            log.warning("invalid packet received, ignoring");
-                            ++invalids;
-                        }
-                    }
-
-                    if (timeouts == Configuration.MAX_TIMEOUTS) {
-                        throw new IOException("timeout");
-                    } else if (invalids == Configuration.MAX_INVALIDS) {
-                        throw new IOException("invalid");
-                    }
-
-                }
+                FileSender.send(socket, new AcknowledgementPacket((short) 0), clientAddress, clientPort, fis);
 
             } catch (FileNotFoundException e) {
                 ErrorPacket errorPacket = new ErrorPacket(

@@ -1,4 +1,4 @@
-package tftp.udp.server;
+package tftp.udp.client;
 
 import tftp.core.Configuration;
 import tftp.core.ErrorType;
@@ -15,44 +15,56 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
+import java.nio.file.Paths;
 import java.util.logging.Logger;
 
 /**
  * @author Sam Marsh
  */
-public class WRQHandler implements Runnable {
+public class RRQHandler implements Runnable {
 
     private final Logger log;
     private InetAddress clientAddress;
     private int clientPort;
-    private final WriteRequestPacket wrq;
+    private final String remotePath;
+    private final String localPath;
 
-    public WRQHandler(InetAddress clientAddress, int clientPort, WriteRequestPacket wrq) {
+    public RRQHandler(InetAddress address, int port, String remotePath) {
+        this(address, port, remotePath, null);
+    }
+
+    public RRQHandler(InetAddress clientAddress, int clientPort, String remotePath, String localPath) {
         this.log = Logger.getLogger(
-                String.format("%s[%s:%d]", WRQHandler.class.getSimpleName(), clientAddress, clientPort)
+                String.format("%s[%s:%d]", RRQHandler.class.getSimpleName(), clientAddress, clientPort)
         );
         this.clientAddress = clientAddress;
         this.clientPort = clientPort;
-        this.wrq = wrq;
+        this.remotePath = remotePath;
+        this.localPath = (localPath == null ? Paths.get(remotePath).getFileName().toString() : localPath);
     }
 
     @Override
     public void run() {
-        log.info("connecting to client: " + clientAddress + ":" + clientPort);
-        log.info("responding to request: " + wrq);
+        log.info("connecting to server: " + clientAddress + ":" + clientPort);
 
         try {
             DatagramSocket socket = new DatagramSocket();
             socket.setSoTimeout(Configuration.TIMEOUT);
 
-            try (FileOutputStream fos = new FileOutputStream(wrq.getFileName())) {
+            try (FileOutputStream fos = new FileOutputStream(localPath)) {
 
-                FileReceiver.receive(socket, new AcknowledgementPacket((short) 0), clientAddress, clientPort, fos);
+                FileReceiver.receive(
+                        socket,
+                        new ReadRequestPacket(remotePath, Mode.OCTET),
+                        clientAddress,
+                        clientPort,
+                        fos
+                );
 
             } catch (FileNotFoundException fnfe) {
                 ErrorPacket errorPacket = new ErrorPacket(
                         ErrorType.FILE_NOT_FOUND,
-                        "unable to write to: " + wrq.getFileName()
+                        "unable to write to: " + localPath
                 );
                 DatagramPacket datagram = UDPUtil.toDatagram(errorPacket, clientAddress, clientPort);
                 socket.send(datagram);

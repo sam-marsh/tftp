@@ -21,11 +21,6 @@ import java.util.logging.Logger;
 public class TFTPServer extends Thread {
 
     /**
-     * The logging mechanism for this class.
-     */
-    private static final Logger LOG = Logger.getLogger(TFTPServer.class.getSimpleName());
-
-    /**
      * The port to run this TFTP server on.
      */
     private final int port;
@@ -66,7 +61,7 @@ public class TFTPServer extends Thread {
                     //receive a datagram packet from the network - this method blocks
                     socket.receive(receivePacket);
                 } catch (IOException e) {
-                    LOG.warning("error receiving packet: " + e);
+                    System.err.println("error receiving packet: " + e);
                     continue;
                 }
 
@@ -92,17 +87,17 @@ public class TFTPServer extends Thread {
                             ));
                             break;
                         default:
-                            LOG.warning("received packet " + packet + ", ignoring");
+                            System.err.println("received packet " + packet + ", ignoring");
                             break;
                     }
 
                 } catch (TFTPException e) {
-                    LOG.warning("error parsing received packet: " + e);
+                    System.err.println("error parsing received packet: " + e);
                 }
             }
 
         } catch (SocketException e) {
-            LOG.severe("failed to start server: " + e);
+            System.err.println("failed to start server: " + e);
         }
     }
 
