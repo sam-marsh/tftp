@@ -56,4 +56,9 @@ public class ErrorPacket extends TFTPPacket {
         return PacketType.ERROR;
     }
 
+    @Override
+    public String toString() {
+        return String.format("%s[code=%d,message=%s]", getPacketType(), errorType.getValue(), message);
+    }
+
 }

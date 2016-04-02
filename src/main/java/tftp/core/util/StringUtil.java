@@ -17,7 +17,7 @@ public class StringUtil {
 
     public static String getString(byte[] bytes, int offset) {
         int nullPos = offset;
-        while (nullPos < bytes.length && nullPos != 0) {
+        while (nullPos < bytes.length && bytes[nullPos] != 0) {
             ++nullPos;
         }
         int length = nullPos - offset;

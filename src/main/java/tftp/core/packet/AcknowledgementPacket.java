@@ -47,7 +47,7 @@ public class AcknowledgementPacket extends TFTPPacket {
 
     @Override
     public String toString() {
-        return String.format("%s[%d]", getPacketType(), getBlockNumber());
+        return String.format("%s{block=%d}", getPacketType(), getBlockNumber());
     }
 
 }

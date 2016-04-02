@@ -15,14 +15,14 @@ public class DataPacket extends TFTPPacket {
     private final int dataLength;
     private final byte[] packetBuffer;
 
-    public DataPacket(short blockNumber, byte[] dataBuffer) {
+    public DataPacket(short blockNumber, byte[] dataBuffer, int dataLength) {
         this.blockNumber = blockNumber;
-        this.dataLength = dataBuffer.length - DATA_OFFSET;
-        this.packetBuffer = new byte[dataBuffer.length + DATA_OFFSET];
+        this.dataLength = dataLength;
+        this.packetBuffer = new byte[dataLength + DATA_OFFSET];
         ByteBuffer buffer = ByteBuffer.wrap(packetBuffer);
         buffer.putShort(getPacketType().getOpcode());
         buffer.putShort(blockNumber);
-        buffer.put(dataBuffer);
+        buffer.put(dataBuffer, 0, dataLength);
     }
 
     public DataPacket(byte[] packetBuffer, int length) {
@@ -55,7 +55,7 @@ public class DataPacket extends TFTPPacket {
 
     @Override
     public String toString() {
-        return String.format("%s[%d]", getPacketType(), getBlockNumber());
+        return String.format("%s[block=%d,length=%d]", getPacketType(), getBlockNumber(), dataLength);
     }
 
 }

@@ -34,7 +34,7 @@ public abstract class RequestPacket extends TFTPPacket {
         this.fileName = StringUtil.getString(bytes, 2);
 
         int modeStringOffset = 2;
-        while (modeStringOffset != 0 && modeStringOffset < bytes.length) {
+        while (bytes[modeStringOffset] != 0 && modeStringOffset < length) {
             ++modeStringOffset;
         }
         ++modeStringOffset;
@@ -55,6 +55,11 @@ public abstract class RequestPacket extends TFTPPacket {
     @Override
     public byte[] getPacketBytes() {
         return bytes;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s[file=%s,mode=%s]", getPacketType(), getFileName(), getMode());
     }
 
 }

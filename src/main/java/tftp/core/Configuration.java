@@ -10,6 +10,9 @@ public class Configuration {
 
     public static final int TIMEOUT = 3000;
 
-    public static final int DEFAULT_SERVER_PORT = 69;
+    public static final int DEFAULT_SERVER_PORT = 60009;
+
+    public static final int MAX_TIMEOUTS = 5;
+    public static final int MAX_INVALIDS = 5;
 
 }

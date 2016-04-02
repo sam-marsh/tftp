@@ -2,14 +2,16 @@ package tftp.udp.server;
 
 import tftp.core.Configuration;
 import tftp.core.TFTPException;
+import tftp.core.packet.ReadRequestPacket;
 import tftp.core.packet.TFTPPacket;
 import tftp.udp.util.UDPUtil;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
 /**
@@ -20,6 +22,7 @@ public class TFTPServer extends Thread {
     private static final Logger LOG = Logger.getLogger(TFTPServer.class.getSimpleName());
 
     private final int port;
+    private final ExecutorService executor = Executors.newCachedThreadPool();
 
     public TFTPServer(int port) {
         this.port = port;
@@ -29,7 +32,6 @@ public class TFTPServer extends Thread {
     public void run() {
         try {
             DatagramSocket socket = new DatagramSocket(port);
-            socket.bind(new InetSocketAddress("127.0.0.1", port));
 
             byte[] buffer = new byte[Configuration.MAX_PACKET_LENGTH];
             DatagramPacket receivePacket = new DatagramPacket(buffer, buffer.length);
@@ -47,11 +49,18 @@ public class TFTPServer extends Thread {
 
                     switch (packet.getPacketType()) {
                         case READ_REQUEST:
+                            executor.submit(new RRQHandler(
+                                    receivePacket.getAddress(),
+                                    receivePacket.getPort(),
+                                    (ReadRequestPacket) packet
+                            ));
                             break;
                         case WRITE_REQUEST:
+                            executor.submit(new WRQHandler());
                             break;
                         default:
-                            System.err.println();
+                            LOG.warning("received packet " + packet + ", ignoring");
+                            break;
                     }
 
                 } catch (TFTPException e) {

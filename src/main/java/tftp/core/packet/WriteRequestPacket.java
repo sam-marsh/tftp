@@ -14,7 +14,7 @@ public class WriteRequestPacket extends RequestPacket {
         super(file, mode);
     }
 
-    public WriteRequestPacket(byte[] bytes, int length) throws TFTPException {
+    public WriteRequestPacket(byte[] bytes, int length) throws TFTPException{
         super(bytes, length);
     }
 
