@@ -30,6 +30,7 @@ public class FileSender {
         short blockNumber = 0;
 
         int read;
+        int lastLength = Configuration.MAX_DATA_LENGTH;
 
         while (true) {
 
@@ -38,13 +39,14 @@ public class FileSender {
             } else {
                 read = fis.read(fileBuffer);
                 if (read == -1) {
-                    if (blockNumber == 1) {
+                    if (lastLength == Configuration.MAX_DATA_LENGTH) {
                         read = 0;
                     } else {
                         break;
                     }
                 }
                 sendPacket = new DataPacket(blockNumber, fileBuffer, read);
+                lastLength = read;
             }
 
             DatagramPacket datagram = UDPUtil.toDatagram(sendPacket, remoteAddress, remotePort);
