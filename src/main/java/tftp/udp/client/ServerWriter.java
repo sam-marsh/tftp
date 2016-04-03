@@ -1,24 +1,21 @@
 package tftp.udp.client;
 
 import tftp.core.Configuration;
-import tftp.core.ErrorType;
 import tftp.core.Mode;
 import tftp.core.TFTPException;
 import tftp.core.packet.*;
 import tftp.udp.FileSender;
-import tftp.udp.util.UDPUtil;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.*;
 import java.nio.file.Paths;
-import java.util.logging.Logger;
 
 /**
  * Handles responses to read requests from clients.
  */
-public class WRQHandler implements Runnable {
+public class ServerWriter implements Runnable {
 
     private InetAddress clientAddress;
     private int clientPort;
@@ -26,11 +23,11 @@ public class WRQHandler implements Runnable {
     private String remoteFile;
     private Mode mode;
 
-    public WRQHandler(InetAddress clientAddress, int clientPort, String localFile, Mode mode) {
+    public ServerWriter(InetAddress clientAddress, int clientPort, String localFile, Mode mode) {
         this(clientAddress, clientPort, localFile, null, mode);
     }
 
-    public WRQHandler(InetAddress clientAddress, int clientPort, String localFile, String remoteFile, Mode mode) {
+    public ServerWriter(InetAddress clientAddress, int clientPort, String localFile, String remoteFile, Mode mode) {
         this.clientAddress = clientAddress;
         this.clientPort = clientPort;
         this.localFile = localFile;

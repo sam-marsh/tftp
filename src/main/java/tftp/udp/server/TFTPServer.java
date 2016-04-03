@@ -13,7 +13,6 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.logging.Logger;
 
 /**
  * The main class, running a Trivial File Transfer server.
@@ -73,14 +72,14 @@ public class TFTPServer extends Thread {
                     // to respond to the client, otherwise ignore.
                     switch (packet.getPacketType()) {
                         case READ_REQUEST:
-                            executor.submit(new RRQHandler(
+                            executor.submit(new WriteToClient(
                                     receivePacket.getAddress(),
                                     receivePacket.getPort(),
                                     (ReadRequestPacket) packet
                             ));
                             break;
                         case WRITE_REQUEST:
-                            executor.submit(new WRQHandler(
+                            executor.submit(new ReadFromClient(
                                     receivePacket.getAddress(),
                                     receivePacket.getPort(),
                                     (WriteRequestPacket) packet

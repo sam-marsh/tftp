@@ -20,13 +20,13 @@ import java.util.logging.Logger;
 /**
  * Handles responses to read requests from clients.
  */
-public class RRQHandler implements Runnable {
+public class WriteToClient implements Runnable {
 
     private final InetAddress clientAddress;
     private final int clientPort;
     private final ReadRequestPacket rrq;
 
-    public RRQHandler(InetAddress clientAddress, int clientPort, ReadRequestPacket rrq) {
+    public WriteToClient(InetAddress clientAddress, int clientPort, ReadRequestPacket rrq) {
         this.clientAddress = clientAddress;
         this.clientPort = clientPort;
         this.rrq = rrq;
