@@ -61,7 +61,7 @@ public class TFTPServer extends Thread {
                     //receive a datagram packet from the network - this method blocks
                     socket.receive(receivePacket);
                 } catch (IOException e) {
-                    System.err.println("error receiving packet: " + e);
+                    System.out.println("error receiving packet: " + e);
                     continue;
                 }
 
@@ -87,17 +87,17 @@ public class TFTPServer extends Thread {
                             ));
                             break;
                         default:
-                            System.err.println("received packet " + packet + ", ignoring");
+                            System.out.println("received packet " + packet + ", ignoring");
                             break;
                     }
 
                 } catch (TFTPException e) {
-                    System.err.println("error parsing received packet: " + e);
+                    System.out.println("error parsing received packet: " + e);
                 }
             }
 
         } catch (SocketException e) {
-            System.err.println("failed to start server: " + e);
+            System.out.println("failed to start server: " + e);
         }
     }
 

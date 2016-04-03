@@ -6,13 +6,17 @@ import tftp.core.TFTPException;
 import tftp.core.packet.*;
 import tftp.udp.util.UDPUtil;
 
+import javax.xml.crypto.Data;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
+import java.text.DecimalFormat;
 
 /**
  * @author Sam Marsh
@@ -20,24 +24,35 @@ import java.net.SocketTimeoutException;
 public class FileSender {
 
     public static void send(DatagramSocket socket, TFTPPacket firstPacket, InetAddress remoteAddress,
-                            int remotePort, FileInputStream fis) throws IOException {
+                            int remotePort, FileInputStream fis, short firstBlockNumber) throws TFTPException {
+
+        long startTime = System.currentTimeMillis();
+        int bytesSent = 0;
 
         byte[] receiveBuffer = new byte[Configuration.MAX_PACKET_LENGTH];
         byte[] fileBuffer = new byte[Configuration.MAX_DATA_LENGTH];
 
         TFTPPacket sendPacket;
 
-        short blockNumber = 0;
+        short blockNumber = firstBlockNumber;
 
         int read;
         int lastLength = Configuration.MAX_DATA_LENGTH;
 
         while (true) {
 
-            if (blockNumber == 0) {
+            if (blockNumber == firstBlockNumber) {
                 sendPacket = firstPacket;
+                if (firstPacket instanceof DataPacket) {
+                    lastLength = ((DataPacket) firstPacket).getDataLength();
+                }
             } else {
-                read = fis.read(fileBuffer);
+                try {
+                    read = fis.read(fileBuffer);
+                } catch (IOException e) {
+                    System.out.println("error reading from file");
+                    return;
+                }
                 if (read == -1) {
                     if (lastLength == Configuration.MAX_DATA_LENGTH) {
                         read = 0;
@@ -58,47 +73,55 @@ public class FileSender {
 
             while (timeouts < Configuration.MAX_TIMEOUTS && invalids < Configuration.MAX_INVALIDS) {
 
-                socket.send(datagram);
                 try {
-                    socket.receive(rcvDatagram);
-                } catch (SocketTimeoutException timeout) {
-                    System.err.println("timed out, resending " + sendPacket);
-                    ++timeouts;
-                    continue;
-                }
+                    socket.send(datagram);
+                    try {
+                        socket.receive(rcvDatagram);
+                    } catch (SocketTimeoutException timeout) {
+                        System.out.println("timed out, resending " + sendPacket);
+                        ++timeouts;
+                        continue;
+                    }
 
-                remoteAddress = rcvDatagram.getAddress();
-                remotePort = rcvDatagram.getPort();
+                    remoteAddress = rcvDatagram.getAddress();
+                    remotePort = rcvDatagram.getPort();
 
-                try {
                     TFTPPacket received = UDPUtil.fromDatagram(rcvDatagram);
 
                     if (received instanceof AcknowledgementPacket) {
                         AcknowledgementPacket ack = (AcknowledgementPacket) received;
-                        System.out.println("received " + ack);
 
                         if (ack.getBlockNumber() == blockNumber) {
+                            if (sendPacket.getPacketType() == PacketType.DATA) {
+                                bytesSent += ((DataPacket) sendPacket).getDataLength();
+                            }
                             ++blockNumber;
                             break;
                         }
 
                     } else if (received instanceof ErrorPacket) {
-                        System.err.println("error packet received: " + received);
+                        System.out.println("error packet received: " + received);
                         return;
                     }
 
-                } catch (TFTPException e) {
-                    System.err.println("invalid packet received, ignoring");
+                } catch (TFTPException | IOException e) {
                     ++invalids;
                 }
             }
 
             if (timeouts == Configuration.MAX_TIMEOUTS) {
-                throw new IOException("timeout");
+                throw new TFTPException("error: transfer timed out");
             } else if (invalids == Configuration.MAX_INVALIDS) {
-                throw new IOException("invalid");
+                throw new TFTPException("error: too many invalid packets received");
             }
 
         }
+
+        long time = System.currentTimeMillis() - startTime;
+        double seconds = (double) time / 1000.0;
+        BigDecimal bigDecimal = new BigDecimal(seconds);
+        bigDecimal = bigDecimal.setScale(1, BigDecimal.ROUND_UP);
+        System.out.printf("sent %d bytes in %s seconds%n", bytesSent, bigDecimal.toPlainString());
     }
+
 }

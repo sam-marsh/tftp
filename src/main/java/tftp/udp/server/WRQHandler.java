@@ -22,15 +22,11 @@ import java.util.logging.Logger;
  */
 public class WRQHandler implements Runnable {
 
-    private final Logger log;
     private InetAddress clientAddress;
     private int clientPort;
     private final WriteRequestPacket wrq;
 
     public WRQHandler(InetAddress clientAddress, int clientPort, WriteRequestPacket wrq) {
-        this.log = Logger.getLogger(
-                String.format("%s[%s:%d]", WRQHandler.class.getSimpleName(), clientAddress, clientPort)
-        );
         this.clientAddress = clientAddress;
         this.clientPort = clientPort;
         this.wrq = wrq;
@@ -38,8 +34,7 @@ public class WRQHandler implements Runnable {
 
     @Override
     public void run() {
-        log.info("connecting to client: " + clientAddress + ":" + clientPort);
-        log.info("responding to request: " + wrq);
+        System.out.println("responding to request: " + wrq + " from client: " + clientAddress + ":" + clientPort);
 
         try {
             DatagramSocket socket = new DatagramSocket();
@@ -56,10 +51,12 @@ public class WRQHandler implements Runnable {
                 );
                 DatagramPacket datagram = UDPUtil.toDatagram(errorPacket, clientAddress, clientPort);
                 socket.send(datagram);
+            } catch (TFTPException e) {
+                e.printStackTrace();
             }
 
         } catch (IOException e) {
-            log.severe("failed to receive: " + e);
+            System.out.println("failed to receive: " + e.getMessage());
         }
     }
 }

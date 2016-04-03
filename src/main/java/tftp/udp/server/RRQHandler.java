@@ -22,15 +22,11 @@ import java.util.logging.Logger;
  */
 public class RRQHandler implements Runnable {
 
-    private final Logger log;
     private final InetAddress clientAddress;
     private final int clientPort;
     private final ReadRequestPacket rrq;
 
     public RRQHandler(InetAddress clientAddress, int clientPort, ReadRequestPacket rrq) {
-        this.log = Logger.getLogger(
-                String.format("%s[%s:%d]", RRQHandler.class.getSimpleName(), clientAddress, clientPort)
-        );
         this.clientAddress = clientAddress;
         this.clientPort = clientPort;
         this.rrq = rrq;
@@ -38,8 +34,7 @@ public class RRQHandler implements Runnable {
 
     @Override
     public void run() {
-        log.info("connecting to client: " + clientAddress + ":" + clientPort);
-        log.info("responding to request: " + rrq);
+        System.out.println("responding to request: " + rrq + " from client: " + clientAddress + ":" + clientPort);
 
         try {
             DatagramSocket socket = new DatagramSocket();
@@ -48,13 +43,18 @@ public class RRQHandler implements Runnable {
             if (rrq.getMode() != Mode.OCTET) {
                 ErrorPacket error = new ErrorPacket(ErrorType.UNDEFINED, "unsupported mode: " + rrq.getMode());
                 socket.send(UDPUtil.toDatagram(error, clientAddress, clientPort));
-                log.severe("unsupported mode: " + rrq.getMode());
+                System.out.println("unsupported mode: " + rrq.getMode());
                 return;
             }
 
             try (FileInputStream fis = new FileInputStream(rrq.getFileName())) {
 
-                FileSender.send(socket, new AcknowledgementPacket((short) 0), clientAddress, clientPort, fis);
+                byte[] first = new byte[Configuration.MAX_DATA_LENGTH];
+                int read = fis.read(first);
+                if (read == -1) read = 0;
+                DataPacket data = new DataPacket((short) 1, first, read);
+
+                FileSender.send(socket, data, clientAddress, clientPort, fis, (short) 1);
 
             } catch (FileNotFoundException e) {
                 ErrorPacket errorPacket = new ErrorPacket(
@@ -63,10 +63,12 @@ public class RRQHandler implements Runnable {
                 );
                 DatagramPacket sendPacket = UDPUtil.toDatagram(errorPacket, clientAddress, clientPort);
                 socket.send(sendPacket);
+            } catch (TFTPException e) {
+                System.out.println(e.getMessage());
             }
 
         } catch (IOException e) {
-            log.severe("failed to transfer: " + e);
+            System.out.println("error: " + e.getMessage());
         }
     }
 

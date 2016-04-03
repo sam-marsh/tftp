@@ -11,10 +11,7 @@ import tftp.udp.util.UDPUtil;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketTimeoutException;
+import java.net.*;
 import java.nio.file.Paths;
 import java.util.logging.Logger;
 
@@ -23,7 +20,6 @@ import java.util.logging.Logger;
  */
 public class RRQHandler implements Runnable {
 
-    private final Logger log;
     private InetAddress clientAddress;
     private int clientPort;
     private final String remotePath;
@@ -34,9 +30,6 @@ public class RRQHandler implements Runnable {
     }
 
     public RRQHandler(InetAddress clientAddress, int clientPort, String remotePath, String localPath) {
-        this.log = Logger.getLogger(
-                String.format("%s[%s:%d]", RRQHandler.class.getSimpleName(), clientAddress, clientPort)
-        );
         this.clientAddress = clientAddress;
         this.clientPort = clientPort;
         this.remotePath = remotePath;
@@ -45,8 +38,6 @@ public class RRQHandler implements Runnable {
 
     @Override
     public void run() {
-        log.info("connecting to server: " + clientAddress + ":" + clientPort);
-
         try {
             DatagramSocket socket = new DatagramSocket();
             socket.setSoTimeout(Configuration.TIMEOUT);
@@ -62,16 +53,23 @@ public class RRQHandler implements Runnable {
                 );
 
             } catch (FileNotFoundException fnfe) {
+                System.out.println("unable to write to: " + localPath);
                 ErrorPacket errorPacket = new ErrorPacket(
                         ErrorType.FILE_NOT_FOUND,
                         "unable to write to: " + localPath
                 );
                 DatagramPacket datagram = UDPUtil.toDatagram(errorPacket, clientAddress, clientPort);
                 socket.send(datagram);
+            } catch (IOException e) {
+                System.out.println("error: " + e.getMessage());
             }
 
-        } catch (IOException e) {
-            log.severe("failed to receive: " + e);
+        } catch (SocketException e) {
+            System.out.println("error: socket could not be opened");
+        } catch (TFTPException e) {
+            System.out.println(e.getMessage());
+        } catch (IOException ignore) {
+            //only reaches here if unable to send error packet, but already printed error message by this time
         }
     }
 }
