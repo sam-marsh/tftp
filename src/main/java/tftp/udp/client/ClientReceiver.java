@@ -18,7 +18,7 @@ import java.nio.file.Paths;
  * Initiates a read request (RRQ) to the specified TFTP server and then, if accepted, reads a file
  * from the server and writes it to disk.
  */
-public class ReadFromServer implements Runnable {
+public class ClientReceiver implements Runnable {
 
     /**
      * The address of the TFTP server.
@@ -50,7 +50,7 @@ public class ReadFromServer implements Runnable {
      *                  named the same as the filename on the remote server, and saved in the current
      *                  working directory)
      */
-    public ReadFromServer(InetAddress serverAddress, int serverPort, String remotePath, String localPath) {
+    public ClientReceiver(InetAddress serverAddress, int serverPort, String remotePath, String localPath) {
         this.serverAddress = serverAddress;
         this.serverPort = serverPort;
         this.remotePath = remotePath;
@@ -58,7 +58,7 @@ public class ReadFromServer implements Runnable {
     }
 
     /**
-     * Starts the transfer from the server.
+     * Initiates the transfer from the server.
      */
     @Override
     public void run() {
@@ -70,7 +70,7 @@ public class ReadFromServer implements Runnable {
             try (FileOutputStream fos = new FileOutputStream(localPath)) {
 
                 //receive the file from the server, specifying the first packet in the 'communication' to be
-                // a read request packet.
+                // a read request packet
                 FileReceiver.receive(
                         socket,
                         new ReadRequestPacket(remotePath, Mode.OCTET),

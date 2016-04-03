@@ -11,7 +11,7 @@ import java.util.Scanner;
  * A client for sending/receiving files from a server using the Trivial File Transfer Protocol.
  * Uses octet mode for all transfers.
  */
-public class WriteToServer extends Thread {
+public class TFTPClient extends Thread {
 
     /**
      * The address of the TFTP server.
@@ -26,7 +26,7 @@ public class WriteToServer extends Thread {
     /**
      * Creates a new TFTP client.
      */
-    public WriteToServer() {
+    public TFTPClient() {
         this.remotePort = Configuration.DEFAULT_SERVER_PORT;
     }
 
@@ -146,7 +146,7 @@ public class WriteToServer extends Thread {
         }
 
         //start the read request handler with the user's specified parameters
-        ReadFromServer handler = new ReadFromServer(remoteAddress, remotePort, remoteFile, localFile);
+        ClientReceiver handler = new ClientReceiver(remoteAddress, remotePort, remoteFile, localFile);
         handler.run();
     }
 
@@ -182,7 +182,7 @@ public class WriteToServer extends Thread {
         }
 
         //start the write request handler with the user's specified parameters
-        ServerWriter handler = new ServerWriter(remoteAddress, remotePort, localFile, remoteFile, Mode.OCTET);
+        ClientSender handler = new ClientSender(remoteAddress, remotePort, localFile, remoteFile);
         handler.run();
     }
 
@@ -223,7 +223,7 @@ public class WriteToServer extends Thread {
      * @param args the user arguments
      */
     public static void main(String[] args) {
-        Thread client = new WriteToServer();
+        Thread client = new TFTPClient();
         client.start();
     }
 
