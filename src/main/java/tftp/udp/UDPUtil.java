@@ -1,4 +1,4 @@
-package tftp.udp.util;
+package tftp.udp;
 
 import tftp.core.TFTPException;
 import tftp.core.packet.TFTPPacket;

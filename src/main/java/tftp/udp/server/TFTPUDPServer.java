@@ -5,7 +5,7 @@ import tftp.core.TFTPException;
 import tftp.core.packet.ReadRequestPacket;
 import tftp.core.packet.TFTPPacket;
 import tftp.core.packet.WriteRequestPacket;
-import tftp.udp.util.UDPUtil;
+import tftp.udp.UDPUtil;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -17,7 +17,7 @@ import java.util.concurrent.Executors;
 /**
  * The main class, running a Trivial File Transfer server.
  */
-public class TFTPServer extends Thread {
+public class TFTPUDPServer extends Thread {
 
     /**
      * The port to run this TFTP server on.
@@ -36,7 +36,7 @@ public class TFTPServer extends Thread {
      *
      * @param port the port to run the server on
      */
-    public TFTPServer(int port) {
+    public TFTPUDPServer(int port) {
         this.port = port;
     }
 
@@ -72,14 +72,14 @@ public class TFTPServer extends Thread {
                     // to respond to the client, otherwise ignore.
                     switch (packet.getPacketType()) {
                         case READ_REQUEST:
-                            executor.submit(new WriteToClient(
+                            executor.submit(new ServerWriter(
                                     receivePacket.getAddress(),
                                     receivePacket.getPort(),
                                     (ReadRequestPacket) packet
                             ));
                             break;
                         case WRITE_REQUEST:
-                            executor.submit(new ReadFromClient(
+                            executor.submit(new ServerReader(
                                     receivePacket.getAddress(),
                                     receivePacket.getPort(),
                                     (WriteRequestPacket) packet
@@ -106,7 +106,7 @@ public class TFTPServer extends Thread {
      * @param args the program arguments, separated by spaces
      */
     public static void main(String[] args) {
-        TFTPServer server = new TFTPServer(Configuration.DEFAULT_SERVER_PORT);
+        TFTPUDPServer server = new TFTPUDPServer(Configuration.DEFAULT_SERVER_PORT);
         server.start();
     }
 

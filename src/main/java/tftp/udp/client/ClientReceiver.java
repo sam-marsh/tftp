@@ -6,7 +6,7 @@ import tftp.core.Mode;
 import tftp.core.TFTPException;
 import tftp.core.packet.*;
 import tftp.udp.FileReceiver;
-import tftp.udp.util.UDPUtil;
+import tftp.udp.UDPUtil;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;

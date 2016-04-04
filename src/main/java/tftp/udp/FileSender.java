@@ -1,22 +1,16 @@
 package tftp.udp;
 
 import tftp.core.Configuration;
-import tftp.core.Mode;
 import tftp.core.TFTPException;
 import tftp.core.packet.*;
-import tftp.udp.util.UDPUtil;
 
-import javax.xml.crypto.Data;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
-import java.text.DecimalFormat;
 
 /**
  * @author Sam Marsh

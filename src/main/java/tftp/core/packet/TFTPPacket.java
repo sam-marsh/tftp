@@ -8,14 +8,31 @@ import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 
 /**
- * @author Sam Marsh
+ * A class that represents a generic TFTP packet.
  */
 public abstract class TFTPPacket {
 
+    /**
+     * Gets the byte representation of this packet, as described in the TFTP RFC.
+     *
+     * @return the raw packet bytes
+     */
     public abstract byte[] getPacketBytes();
 
+    /**
+     * @return the type of packet (eg. ACK, RRQ, ...)
+     */
     public abstract PacketType getPacketType();
 
+    /**
+     * Given a byte array (and a length), this examines the opcode and then parses the packet
+     * according to the packet type.
+     *
+     * @param buffer the buffer holding the TFTP packet bytes
+     * @param length the length (in bytes) of the TFTP packet
+     * @return a TFTPPacket with attributes described in the given byte array
+     * @throws TFTPException if the packet type is unknown, or if the bytes could not be parsed correctly
+     */
     public static TFTPPacket fromByteArray(byte[] buffer, int length) throws TFTPException {
         short opcode = ByteBuffer.wrap(buffer).getShort();
         PacketType type = PacketType.fromOpcode(opcode);

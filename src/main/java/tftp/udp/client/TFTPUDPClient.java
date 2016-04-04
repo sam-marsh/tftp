@@ -1,7 +1,6 @@
 package tftp.udp.client;
 
 import tftp.core.Configuration;
-import tftp.core.Mode;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -11,7 +10,7 @@ import java.util.Scanner;
  * A client for sending/receiving files from a server using the Trivial File Transfer Protocol.
  * Uses octet mode for all transfers.
  */
-public class TFTPClient extends Thread {
+public class TFTPUDPClient extends Thread {
 
     /**
      * The address of the TFTP server.
@@ -26,7 +25,7 @@ public class TFTPClient extends Thread {
     /**
      * Creates a new TFTP client.
      */
-    public TFTPClient() {
+    public TFTPUDPClient() {
         this.remotePort = Configuration.DEFAULT_SERVER_PORT;
     }
 
@@ -223,7 +222,7 @@ public class TFTPClient extends Thread {
      * @param args the user arguments
      */
     public static void main(String[] args) {
-        Thread client = new TFTPClient();
+        Thread client = new TFTPUDPClient();
         client.start();
     }
 

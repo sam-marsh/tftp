@@ -2,11 +2,10 @@ package tftp.udp.server;
 
 import tftp.core.Configuration;
 import tftp.core.ErrorType;
-import tftp.core.Mode;
 import tftp.core.TFTPException;
 import tftp.core.packet.*;
 import tftp.udp.FileReceiver;
-import tftp.udp.util.UDPUtil;
+import tftp.udp.UDPUtil;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -14,19 +13,17 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketTimeoutException;
-import java.util.logging.Logger;
 
 /**
  * @author Sam Marsh
  */
-public class ReadFromClient implements Runnable {
+public class ServerReader implements Runnable {
 
     private InetAddress clientAddress;
     private int clientPort;
     private final WriteRequestPacket wrq;
 
-    public ReadFromClient(InetAddress clientAddress, int clientPort, WriteRequestPacket wrq) {
+    public ServerReader(InetAddress clientAddress, int clientPort, WriteRequestPacket wrq) {
         this.clientAddress = clientAddress;
         this.clientPort = clientPort;
         this.wrq = wrq;

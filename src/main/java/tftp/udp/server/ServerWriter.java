@@ -6,7 +6,7 @@ import tftp.core.Mode;
 import tftp.core.TFTPException;
 import tftp.core.packet.*;
 import tftp.udp.FileSender;
-import tftp.udp.util.UDPUtil;
+import tftp.udp.UDPUtil;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -14,19 +14,17 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketTimeoutException;
-import java.util.logging.Logger;
 
 /**
  * Handles responses to read requests from clients.
  */
-public class WriteToClient implements Runnable {
+public class ServerWriter implements Runnable {
 
     private final InetAddress clientAddress;
     private final int clientPort;
     private final ReadRequestPacket rrq;
 
-    public WriteToClient(InetAddress clientAddress, int clientPort, ReadRequestPacket rrq) {
+    public ServerWriter(InetAddress clientAddress, int clientPort, ReadRequestPacket rrq) {
         this.clientAddress = clientAddress;
         this.clientPort = clientPort;
         this.rrq = rrq;

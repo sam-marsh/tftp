@@ -1,10 +1,8 @@
 package tftp.udp;
 
 import tftp.core.Configuration;
-import tftp.core.Mode;
 import tftp.core.TFTPException;
 import tftp.core.packet.*;
-import tftp.udp.util.UDPUtil;
 
 import java.io.FileOutputStream;
 import java.io.IOException;

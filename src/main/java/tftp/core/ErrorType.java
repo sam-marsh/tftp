@@ -31,13 +31,13 @@ public enum ErrorType {
         return meaning;
     }
 
-    public static ErrorType fromValue(int value) throws TFTPException {
+    public static ErrorType fromValue(int value) {
         for (ErrorType error : values()) {
             if (error.value == value) {
                 return error;
             }
         }
-        throw new TFTPException("no such error value: " + value);
+        return UNDEFINED;
     }
 
 }
