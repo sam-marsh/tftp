@@ -74,7 +74,7 @@ public class ServerReader implements Runnable {
 
             } catch (FileNotFoundException fnfe) {
                 //some sort of error occurred in writing to the file, print a message and send that
-                // same message to the client in an errror packet
+                // same message to the client in an error packet
                 System.out.println("unable to write to: " + wrq.getFileName());
                 ErrorPacket errorPacket = new ErrorPacket(
                         ErrorType.FILE_NOT_FOUND,
