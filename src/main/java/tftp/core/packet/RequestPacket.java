@@ -57,6 +57,9 @@ public abstract class RequestPacket extends TFTPPacket {
     public RequestPacket(byte[] bytes, int length) throws TFTPException {
         this.fileName = StringUtil.getString(bytes, 2);
 
+        //we found the file-name string already (starting at offset 2). now need to find start of mode
+        // string - so increment a counter until the null byte indicating the end of the filename is found,
+        // then the mode string starts at the offset immediately after the null byte
         int modeStringOffset = 2;
         while (bytes[modeStringOffset] != 0 && modeStringOffset < length) {
             ++modeStringOffset;
