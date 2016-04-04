@@ -69,6 +69,7 @@ public class FileReceiver {
             int invalids = 0;
 
             //continue looping until we reach the max number of timeouts/invalids
+            // the hopeful alternative is that the relevant data is received, in which case will break out of the loop
             while (timeouts < Configuration.MAX_TIMEOUTS && invalids < Configuration.MAX_INVALIDS) {
                 try {
                     //send the current datagram to the remote host
@@ -79,12 +80,13 @@ public class FileReceiver {
                         // the number of timeouts and 're-enter' the loop - thus sending the datagram again
                         socket.receive(rcvDatagram);
                     } catch (SocketTimeoutException timeout) {
+                        System.out.println("timed out, resending " + sendPacket);
                         ++timeouts;
                         continue;
                     }
 
                     if (ackNumber == 0) {
-                        //server can respond from a different port, so re-set the remote address and port based on
+                        //server can respond from a different port, so re-set the remote port based on
                         // the received datagram
                         remotePort = rcvDatagram.getPort();
                     }
@@ -151,8 +153,10 @@ public class FileReceiver {
                 throw new TFTPException("error: transfer timed out");
             } else if (invalids == Configuration.MAX_INVALIDS) {
                 //too many odd packets received or too many failed attempts to write to output stream
-                throw new TFTPException("error: too many invalid packets received " +
-                        "or failed to write to file too many times");
+                throw new TFTPException(
+                        "error: too many invalid packets received " +
+                        "or failed to write to file too many times"
+                );
             }
         }
     }
