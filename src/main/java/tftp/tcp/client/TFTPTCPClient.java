@@ -2,17 +2,20 @@ package tftp.tcp.client;
 
 import tftp.core.Configuration;
 import tftp.core.Mode;
+import tftp.core.TFTPException;
+import tftp.core.packet.AcknowledgementPacket;
+import tftp.core.packet.ReadRequestPacket;
+import tftp.core.packet.TFTPPacket;
 import tftp.core.packet.WriteRequestPacket;
+import tftp.tcp.FileReceiver;
+import tftp.tcp.FileSender;
 import tftp.tcp.server.TFTPTCPServer;
 import tftp.udp.client.ClientReceiver;
 import tftp.udp.client.ClientSender;
 import tftp.udp.client.TFTPUDPClient;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.StandardSocketOptions;
-import java.net.UnknownHostException;
+import java.io.*;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.AsynchronousSocketChannel;
@@ -25,13 +28,14 @@ import java.util.concurrent.ExecutionException;
  */
 public class TFTPTCPClient extends Thread {
 
-    private AsynchronousSocketChannel channel;
+    private InetAddress serverAddress;
+    private int serverPort;
 
     /**
      * Creates a new TFTP client.
      */
     public TFTPTCPClient() {
-        //nothing
+        this.serverPort = Configuration.DEFAULT_SERVER_PORT;
     }
 
     @Override
@@ -118,13 +122,8 @@ public class TFTPTCPClient extends Thread {
             }
         }
 
-        try {
-            channel = AsynchronousSocketChannel.open();
-            channel.connect(new InetSocketAddress(remoteAddress, remotePort)).get();
-        } catch (IOException | InterruptedException | ExecutionException  e) {
-            System.out.println("failed to connect to server: " + e.getMessage());
-        }
-
+        this.serverAddress = remoteAddress;
+        this.serverPort = remotePort;
     }
 
     /**
@@ -144,7 +143,7 @@ public class TFTPTCPClient extends Thread {
         }
 
         //if no tftp server specified, print error
-        if (channel == null || !channel.isOpen()) {
+        if (serverAddress == null) {
             System.out.println("not connected to a server");
             System.out.println("use 'connect' command to connect");
             return;
@@ -158,10 +157,49 @@ public class TFTPTCPClient extends Thread {
             localFile = args[2];
         }
 
-        //start the read request handler with the user's specified parameters
+        //open a socket using any free port
+        try (Socket socket = new Socket()) {
 
-        //ClientReceiver handler = new ClientReceiver(remoteAddress, remotePort, remoteFile, localFile);
-        //handler.run();
+            //attempt to connect to the server
+            try {
+                socket.connect(new InetSocketAddress(serverAddress, serverPort));
+            } catch (IOException e) {
+                System.out.println("could not reach server: " + e.getMessage());
+                return;
+            }
+
+            //open the input and output streams
+            InputStream is;
+            OutputStream os;
+            try {
+                is = socket.getInputStream();
+            } catch (IOException e) {
+                System.out.println("failed to open input stream: " + e.getMessage());
+                return;
+            }
+            try {
+                os = socket.getOutputStream();
+            } catch (IOException e) {
+                System.out.println("failed to open output stream: " + e.getMessage());
+                return;
+            }
+
+            //send an initial RRQ
+            ReadRequestPacket rrq = new ReadRequestPacket(remoteFile, Mode.OCTET);
+
+            try {
+                os.write(rrq.getPacketBytes());
+            } catch (IOException e) {
+                System.out.println("could not send read request: " + e.getMessage());
+                return;
+            }
+
+            //receive the file in response
+            FileReceiver.receive(is, localFile);
+
+        } catch (IOException e) {
+            System.out.println("could not create socket: " + e.getMessage());
+        }
     }
 
     /**
@@ -181,7 +219,7 @@ public class TFTPTCPClient extends Thread {
         }
 
         //if no tftp server specified, print error
-        if (channel == null || !channel.isOpen()) {
+        if (serverAddress == null) {
             System.out.println("not connected to a server");
             System.out.println("use 'connect' command to connect");
             return;
@@ -195,16 +233,81 @@ public class TFTPTCPClient extends Thread {
             remoteFile = args[2];
         }
 
-        ByteBuffer buffer = ByteBuffer.wrap(new WriteRequestPacket(remoteFile, Mode.OCTET).getPacketBytes());
-        try {
-            AsynchronousFileChannel in = AsynchronousFileChannel.open(Paths.get(localFile));
-            new TFTPTCPServer.AsynchronousFileWriter(in, out)
-        } catch (IOException e) {
-            e.printStackTrace();
+        File file = new File(localFile);
+        if (!file.exists()) {
+            System.out.println("file does not exist: " + localFile);
+            return;
         }
-        //start the write request handler with the user's specified parameters
-        //ClientSender handler = new ClientSender(remoteAddress, remotePort, localFile, remoteFile);
-        //handler.run();
+
+        //open a socket using any free port
+        try (Socket socket = new Socket()) {
+
+            //attempt to connect to the server
+            try {
+                socket.connect(new InetSocketAddress(serverAddress, serverPort));
+            } catch (IOException e) {
+                System.out.println("could not reach server: " + e.getMessage());
+                return;
+            }
+
+            //open the input and output streams
+            InputStream is;
+            OutputStream os;
+            try {
+                is = socket.getInputStream();
+            } catch (IOException e) {
+                System.out.println("failed to open input stream: " + e.getMessage());
+                return;
+            }
+            try {
+                os = socket.getOutputStream();
+            } catch (IOException e) {
+                System.out.println("failed to open output stream: " + e.getMessage());
+                return;
+            }
+
+            //send an initial WRQ
+            WriteRequestPacket wrq = new WriteRequestPacket(remoteFile, Mode.OCTET);
+
+            try {
+                os.write(wrq.getPacketBytes());
+            } catch (IOException e) {
+                System.out.println("could not send write request: " + e.getMessage());
+                return;
+            }
+
+            //allocate a buffer for receiving the acknowledgement
+            byte[] buffer = new byte[Configuration.MAX_DATA_LENGTH];
+
+            try {
+                //read the TFTP packet from the server
+                int read = is.read(buffer);
+
+                if (read == -1) {
+                    throw new IOException("end of stream reached");
+                }
+
+                //convert server response to TFTP packet
+                TFTPPacket response = TFTPPacket.fromByteArray(buffer, read);
+
+                //should acknowledge the response from the server
+                if (!(response instanceof AcknowledgementPacket)) {
+                    System.out.println("unexpected packet from server, aborting: " + response);
+                    return;
+                }
+
+                //server accepted WRQ - send file
+                FileSender.send(os, localFile);
+
+            } catch (IOException e) {
+                System.out.println("could not read server response: " + e.getMessage());
+            } catch (TFTPException e) {
+                System.out.println("could not parse server response: " + e.getMessage());
+            }
+
+        } catch (IOException e) {
+            System.out.println("could not create socket: " + e.getMessage());
+        }
     }
 
     /**

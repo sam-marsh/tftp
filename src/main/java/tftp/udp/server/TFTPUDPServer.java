@@ -29,7 +29,7 @@ public class TFTPUDPServer extends Thread {
      * is received, a job is submitted to this executor to respond to the request
      * asynchronously.
      */
-    private final ExecutorService executor = Executors.newCachedThreadPool();
+    private final ExecutorService executor;
 
     /**
      * Creates a new TFTP server thread, to run on the given port.
@@ -38,6 +38,7 @@ public class TFTPUDPServer extends Thread {
      */
     public TFTPUDPServer(int port) {
         this.port = port;
+        this.executor = Executors.newCachedThreadPool();
     }
 
     /**

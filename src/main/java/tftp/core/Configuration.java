@@ -20,7 +20,7 @@ public class Configuration {
      * The default (initial) server port. In the client, if no port is specified, this will be used as the assumed
      * port of the TFTP server. In the server, if no port as specified, the server will bind to this port.
      */
-    public static final int DEFAULT_SERVER_PORT = 69;
+    public static final int DEFAULT_SERVER_PORT = 6009;
 
     /**
      * The maximum number of timeouts (in a row) to occur before the transfer 'gives up'.
