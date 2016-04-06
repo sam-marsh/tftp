@@ -12,7 +12,6 @@ import java.util.Scanner;
  */
 public abstract class GenericTFTPClient extends Thread {
 
-
     /**
      * The address of the TFTP server.
      */
@@ -150,6 +149,13 @@ public abstract class GenericTFTPClient extends Thread {
         get(remoteFile, localFile);
     }
 
+    /**
+     * Overridden by the subclass - gets a file using a particular protocol (TFTP-UDP or TFTP-TCP) depending
+     * on the client.
+     *
+     * @param remoteFile the path of the file on the server
+     * @param localFile the path of the file on the local machine
+     */
     protected abstract void get(String remoteFile, String localFile);
 
     /**
@@ -187,6 +193,14 @@ public abstract class GenericTFTPClient extends Thread {
 
         put(localFile, remoteFile);
     }
+
+    /**
+     * Overridden by the subclass - writes a file using a particular protocol (TFTP-UDP or TFTP-TCP) depending
+     * on the client.
+     *
+     * @param localFile the path of the file on the local machine
+     * @param remoteFile the path of the file on the server
+     */
 
     protected abstract void put(String localFile, String remoteFile);
 
