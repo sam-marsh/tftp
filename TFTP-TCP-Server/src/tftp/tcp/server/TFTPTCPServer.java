@@ -115,6 +115,7 @@ public class TFTPTCPServer extends Thread {
                     String fileName = ((RequestPacket) packet).getFileName();
                     File file = new File(fileName);
 
+                    System.out.println("responding to request: " + rq + " from client: " + workerSocket.getInetAddress() + ":" + workerSocket.getPort());
 
                     if (packet instanceof WriteRequestPacket) {
 
