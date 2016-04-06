@@ -121,13 +121,13 @@ public class TFTPTCPServer extends Thread {
                         AcknowledgementPacket ack = new AcknowledgementPacket((short) 0);
                         try {
                             writePadded(ack, os);
-                        } catch (TFTPException e) {
-                            System.out.println(e.getMessage());
+                        } catch (IOException e) {
+                            System.out.println("could not send acknowledgement: " + e.getMessage());
                             return;
                         }
 
                         //now receive the file
-                        TCPFileReceiver.receive(is, fileName);
+                        TCPFileUtil.receive(is, fileName);
 
                     } else if (packet instanceof ReadRequestPacket) {
 
@@ -138,8 +138,8 @@ public class TFTPTCPServer extends Thread {
                             );
                             try {
                                 writePadded(error, os);
-                            } catch (TFTPException e) {
-                                System.out.println(e.getMessage());
+                            } catch (IOException e) {
+                                System.out.println("could not send error packet: " + e.getMessage());
                             }
                             return;
                         }
@@ -149,13 +149,13 @@ public class TFTPTCPServer extends Thread {
                         AcknowledgementPacket ack = new AcknowledgementPacket((short) 0);
                         try {
                             writePadded(ack, os);
-                        } catch (TFTPException e) {
-                            System.out.println(e.getMessage());
+                        } catch (IOException e) {
+                            System.out.println("could not send acknowledgement: " + e.getMessage());
                             return;
                         }
 
                         //now send it to the client
-                        TCPFileSender.send(os, fileName);
+                        TCPFileUtil.send(os, fileName);
 
                     }
 
@@ -176,15 +176,21 @@ public class TFTPTCPServer extends Thread {
         }
     }
 
-    private void writePadded(TFTPPacket packet, OutputStream os) throws TFTPException {
+    /**
+     * Since the first packet could be an acknowledgement packet (4 bytes) or an error packet (arbitrarily many
+     * bytes up to the max packet length), it is hard to tell where the file transfer starts. To solve this, the server
+     * response is padded to {@link Configuration#MAX_PACKET_LENGTH} bytes - i.e. the file bytes start on offset 512.
+     * This method writes a TFTP packet to the stream, padding it to 512 bytes long.
+     *
+     * @param packet the packet to send to the client
+     * @param os the output stream to the client
+     * @throws TFTPException if the packet could not be sent
+     */
+    private void writePadded(TFTPPacket packet, OutputStream os) throws IOException {
         byte[] padded = new byte[Configuration.MAX_PACKET_LENGTH];
-        try {
-            byte[] bytes = packet.getPacketBytes();
-            System.arraycopy(bytes, 0, padded, 0, bytes.length);
-            os.write(padded);
-        } catch (IOException e) {
-            throw new TFTPException("could not send packet: " + e.getMessage());
-        }
+        byte[] bytes = packet.getPacketBytes();
+        System.arraycopy(bytes, 0, padded, 0, bytes.length);
+        os.write(padded);
     }
 
     /**

@@ -88,7 +88,7 @@ public class TFTPTCPClient extends GenericTFTPClient {
             }
 
             //receive the file now that ACK from server has been received
-            TCPFileReceiver.receive(is, localFile);
+            TCPFileUtil.receive(is, localFile);
 
         } catch (IOException e) {
             System.out.println("could not create socket: " + e.getMessage());
@@ -162,7 +162,7 @@ public class TFTPTCPClient extends GenericTFTPClient {
                 }
 
                 //server accepted WRQ - send file
-                TCPFileSender.send(os, localFile);
+                TCPFileUtil.send(os, localFile);
 
             } catch (IOException e) {
                 System.out.println("could not read server response: " + e.getMessage());
@@ -175,6 +175,17 @@ public class TFTPTCPClient extends GenericTFTPClient {
         }
     }
 
+    /**
+     * Since the first packet could be an acknowledgement packet (4 bytes) or an error packet (arbitrarily many
+     * bytes up to the max packet length), it is hard to tell where the file transfer starts. To solve this, the server
+     * response is padded to {@link Configuration#MAX_PACKET_LENGTH} bytes - i.e. the file bytes start on offset 512.
+     * This method reads the TFTP packet from the first 512 bytes read from the input stream.
+     *
+     * @param is the input stream from the server
+     * @return the TFTP packet parsed from the input stream
+     * @throws IOException if failed to read from the input stream
+     * @throws TFTPException if failed to parse the TFTP packet
+     */
     private TFTPPacket readPadded(InputStream is) throws IOException, TFTPException {
         byte[] padded = new byte[Configuration.MAX_PACKET_LENGTH];
         int read = is.read(padded, 0, padded.length);
