@@ -1,11 +1,10 @@
-package tftp.udp.server;
+package tftp.udp;
 
 import tftp.core.Configuration;
 import tftp.core.TFTPException;
 import tftp.core.packet.ReadRequestPacket;
 import tftp.core.packet.TFTPPacket;
 import tftp.core.packet.WriteRequestPacket;
-import tftp.udp.UDPUtil;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -73,14 +72,14 @@ public class TFTPUDPServer extends Thread {
                     // to respond to the client, otherwise ignore.
                     switch (packet.getPacketType()) {
                         case READ_REQUEST:
-                            executor.submit(new RRQHandler(
+                            executor.submit(new ServerRRQHandler(
                                     receivePacket.getAddress(),
                                     receivePacket.getPort(),
                                     (ReadRequestPacket) packet
                             ));
                             break;
                         case WRITE_REQUEST:
-                            executor.submit(new WRQHandler(
+                            executor.submit(new ServerWRQHandler(
                                     receivePacket.getAddress(),
                                     receivePacket.getPort(),
                                     (WriteRequestPacket) packet

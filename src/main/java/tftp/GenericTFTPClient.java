@@ -126,7 +126,7 @@ public abstract class GenericTFTPClient extends Thread {
      */
     private void handleGet(String[] args) {
         String remoteFile;
-        String localFile = null;
+        String localFile;
 
         //if no arguments to command, print correct usage
         if (args.length == 1) {
@@ -171,7 +171,7 @@ public abstract class GenericTFTPClient extends Thread {
      */
     private void handlePut(String[] args) {
         String localFile;
-        String remoteFile = null;
+        String remoteFile;
 
         //if no arguments to command, print correct usage
         if (args.length == 1) {

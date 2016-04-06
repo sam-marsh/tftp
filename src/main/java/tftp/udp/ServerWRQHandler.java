@@ -1,4 +1,4 @@
-package tftp.udp.server;
+package tftp.udp;
 
 import tftp.core.Configuration;
 import tftp.core.ErrorType;
@@ -18,7 +18,7 @@ import java.net.InetAddress;
  * A 'handler' for reading a file from a client (WRQ) and writing it to a disk. That is, this class is the
  * responder to write requests from the client.
  */
-public class WRQHandler implements Runnable {
+public class ServerWRQHandler implements Runnable {
 
     /**
      * The address of the client.
@@ -42,7 +42,7 @@ public class WRQHandler implements Runnable {
      * @param clientPort the port of the client which sent the WRQ
      * @param wrq the write request received from the client
      */
-    public WRQHandler(InetAddress clientAddress, int clientPort, WriteRequestPacket wrq) {
+    public ServerWRQHandler(InetAddress clientAddress, int clientPort, WriteRequestPacket wrq) {
         this.clientAddress = clientAddress;
         this.clientPort = clientPort;
         this.wrq = wrq;

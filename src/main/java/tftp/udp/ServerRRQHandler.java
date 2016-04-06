@@ -1,4 +1,4 @@
-package tftp.udp.server;
+package tftp.udp;
 
 import tftp.core.Configuration;
 import tftp.core.ErrorType;
@@ -18,13 +18,13 @@ import java.net.InetAddress;
 /**
  * Handles responses to read requests from clients.
  */
-public class RRQHandler implements Runnable {
+public class ServerRRQHandler implements Runnable {
 
     private final InetAddress clientAddress;
     private final int clientPort;
     private final ReadRequestPacket rrq;
 
-    public RRQHandler(InetAddress clientAddress, int clientPort, ReadRequestPacket rrq) {
+    public ServerRRQHandler(InetAddress clientAddress, int clientPort, ReadRequestPacket rrq) {
         this.clientAddress = clientAddress;
         this.clientPort = clientPort;
         this.rrq = rrq;
