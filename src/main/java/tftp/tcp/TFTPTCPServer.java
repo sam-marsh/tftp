@@ -199,7 +199,29 @@ public class TFTPTCPServer extends Thread {
      * @param args the program arguments
      */
     public static void main(String[] args) {
-        Thread server = new TFTPTCPServer(Configuration.DEFAULT_SERVER_PORT);
+        int port = Configuration.DEFAULT_SERVER_PORT;
+
+        //parse the arguments
+        for (int i = 0; i < args.length - 1; ++i) {
+            if (args[i].equals("-port")) {
+                try {
+                    port = Integer.parseInt(args[i + 1]);
+                } catch (NumberFormatException nfe) {
+                    System.out.println("invalid port: " + args[i + 1]);
+                    return;
+                }
+            } else if (args[i].equals("-timeout")) {
+                try {
+                    Configuration.TIMEOUT = Integer.parseInt(args[i + 1]);
+                } catch (NumberFormatException nfe) {
+                    System.out.println("invalid timeout: " + args[i + 1]);
+                    return;
+                }
+            }
+        }
+
+        //run the server, passing the port as an argument
+        Thread server = new TFTPTCPServer(port);
         server.start();
     }
 
