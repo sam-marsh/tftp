@@ -18,13 +18,13 @@ import java.net.InetAddress;
 /**
  * Handles responses to read requests from clients.
  */
-public class ServerWriter implements Runnable {
+public class RRQHandler implements Runnable {
 
     private final InetAddress clientAddress;
     private final int clientPort;
     private final ReadRequestPacket rrq;
 
-    public ServerWriter(InetAddress clientAddress, int clientPort, ReadRequestPacket rrq) {
+    public RRQHandler(InetAddress clientAddress, int clientPort, ReadRequestPacket rrq) {
         this.clientAddress = clientAddress;
         this.clientPort = clientPort;
         this.rrq = rrq;

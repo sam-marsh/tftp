@@ -73,14 +73,14 @@ public class TFTPUDPServer extends Thread {
                     // to respond to the client, otherwise ignore.
                     switch (packet.getPacketType()) {
                         case READ_REQUEST:
-                            executor.submit(new ServerWriter(
+                            executor.submit(new RRQHandler(
                                     receivePacket.getAddress(),
                                     receivePacket.getPort(),
                                     (ReadRequestPacket) packet
                             ));
                             break;
                         case WRITE_REQUEST:
-                            executor.submit(new ServerReader(
+                            executor.submit(new WRQHandler(
                                     receivePacket.getAddress(),
                                     receivePacket.getPort(),
                                     (WriteRequestPacket) packet

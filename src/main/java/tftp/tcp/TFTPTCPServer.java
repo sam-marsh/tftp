@@ -1,6 +1,7 @@
 package tftp.tcp;
 
 import tftp.core.Configuration;
+import tftp.core.ErrorType;
 import tftp.core.Mode;
 import tftp.core.TFTPException;
 import tftp.core.packet.*;
@@ -12,19 +13,29 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * @author Sam Marsh
+ * The main class, running a Trivial File Transfer server on TCP.
  */
 public class TFTPTCPServer extends Thread {
 
+    /**
+     * The port to bind the server socket to.
+     */
     private final int port;
 
+    /**
+     * Creates a new TFTP TCP server.
+     *
+     * @param port the port to bind the server socket to
+     */
     public TFTPTCPServer(int port) {
         this.port = port;
     }
 
+    /**
+     * Run when this thread is started - loops forever, responding to WRQs/RRQs from clients.
+     */
     @Override
     public void run() {
-
         //open the 'master' socket which receives RRQs and WRQs
         try (ServerSocket mainSocket = new ServerSocket(port)){
 
@@ -103,30 +114,48 @@ public class TFTPTCPServer extends Thread {
                     String fileName = ((RequestPacket) packet).getFileName();
                     File file = new File(fileName);
 
+
                     if (packet instanceof WriteRequestPacket) {
 
                         //send an acknowledgement to the client so it will send the file through
                         AcknowledgementPacket ack = new AcknowledgementPacket((short) 0);
                         try {
-                            os.write(ack.getPacketBytes());
-                        } catch (IOException e) {
-                            System.out.println("could not send acknowledgement: " + e.getMessage());
+                            writePadded(ack, os);
+                        } catch (TFTPException e) {
+                            System.out.println(e.getMessage());
                             return;
                         }
 
                         //now receive the file
-                        FileReceiver.receive(is, fileName);
+                        TCPFileReceiver.receive(is, fileName);
 
                     } else if (packet instanceof ReadRequestPacket) {
 
                         //ensure that the requested file exists
                         if (!file.exists()) {
-                            System.out.println("file does not exist: " + rq.getFileName());
+                            ErrorPacket error = new ErrorPacket(
+                                    ErrorType.FILE_NOT_FOUND, "file not found: " + rq.getFileName()
+                            );
+                            try {
+                                writePadded(error, os);
+                            } catch (TFTPException e) {
+                                System.out.println(e.getMessage());
+                            }
                             return;
                         }
 
-                        //if so, send it to the client
-                        FileSender.send(os, fileName);
+                        //send an acknowledgement to the client to notify it that all is going well and the file is
+                        // about to be sent through
+                        AcknowledgementPacket ack = new AcknowledgementPacket((short) 0);
+                        try {
+                            writePadded(ack, os);
+                        } catch (TFTPException e) {
+                            System.out.println(e.getMessage());
+                            return;
+                        }
+
+                        //now send it to the client
+                        TCPFileSender.send(os, fileName);
 
                     }
 
@@ -144,6 +173,17 @@ public class TFTPTCPServer extends Thread {
 
         } catch (IOException e) {
             System.out.println("failed to start server: " + e.getMessage());
+        }
+    }
+
+    private void writePadded(TFTPPacket packet, OutputStream os) throws TFTPException {
+        byte[] padded = new byte[Configuration.MAX_PACKET_LENGTH];
+        try {
+            byte[] bytes = packet.getPacketBytes();
+            System.arraycopy(bytes, 0, padded, 0, bytes.length);
+            os.write(padded);
+        } catch (IOException e) {
+            throw new TFTPException("could not send packet: " + e.getMessage());
         }
     }
 

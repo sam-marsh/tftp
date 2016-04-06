@@ -8,14 +8,14 @@ import java.io.*;
 /**
  *
  */
-public class FileReceiver {
+public class TCPFileReceiver {
 
     public static void receive(InputStream is, String file) {
         byte[] buffer = new byte[Configuration.MAX_DATA_LENGTH];
         try (FileOutputStream writer = new FileOutputStream(file)) {
             int num;
             try {
-                while ((num = is.read(buffer)) == Configuration.MAX_DATA_LENGTH) {
+                while ((num = is.read(buffer)) != -1) {
                     writer.write(buffer, 0, num);
                 }
             } catch (IOException e) {

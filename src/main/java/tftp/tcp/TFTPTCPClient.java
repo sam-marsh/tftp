@@ -4,16 +4,13 @@ import tftp.GenericTFTPClient;
 import tftp.core.Configuration;
 import tftp.core.Mode;
 import tftp.core.TFTPException;
-import tftp.core.packet.AcknowledgementPacket;
-import tftp.core.packet.ReadRequestPacket;
-import tftp.core.packet.TFTPPacket;
-import tftp.core.packet.WriteRequestPacket;
+import tftp.core.packet.*;
 
 import java.io.*;
 import java.net.*;
 
 /**
- * @author Sam Marsh
+ * A client for sending/receiving files from a server using the Trivial File Transfer Protocol over TCP.
  */
 public class TFTPTCPClient extends GenericTFTPClient {
 
@@ -24,6 +21,12 @@ public class TFTPTCPClient extends GenericTFTPClient {
         super(port);
     }
 
+    /**
+     * Receives a file from the server using TFTP over UDP.
+     *
+     * @param remoteFile the path of the file on the server
+     * @param localFile the path of the file on the local machine
+     */
     @Override
     protected void get(String remoteFile, String localFile) {
         //open a socket using any free port
@@ -63,14 +66,41 @@ public class TFTPTCPClient extends GenericTFTPClient {
                 return;
             }
 
-            //receive the file in response
-            FileReceiver.receive(is, localFile);
+            try {
+                //read the TFTP packet from the server
+                TFTPPacket response = readPadded(is);
+
+                if (response instanceof ErrorPacket) {
+                    System.out.println("error: " + ((ErrorPacket) response).getMessage());
+                    return;
+                }
+
+                //should acknowledge the response from the server
+                if (!(response instanceof AcknowledgementPacket)) {
+                    System.out.println("unexpected packet from server, aborting: " + response);
+                    return;
+                }
+
+            } catch (IOException e) {
+                System.out.println("could not read server response: " + e.getMessage());
+            } catch (TFTPException e) {
+                System.out.println("could not parse server response: " + e.getMessage());
+            }
+
+            //receive the file now that ACK from server has been received
+            TCPFileReceiver.receive(is, localFile);
 
         } catch (IOException e) {
             System.out.println("could not create socket: " + e.getMessage());
         }
     }
 
+    /**
+     * Sends a file to the server using the TFTP protocol over UDP.
+     *
+     * @param localFile the path of the file on the local machine
+     * @param remoteFile the path of the file on the server
+     */
     @Override
     protected void put(String localFile, String remoteFile) {
         File file = new File(localFile);
@@ -116,19 +146,14 @@ public class TFTPTCPClient extends GenericTFTPClient {
                 return;
             }
 
-            //allocate a buffer for receiving the acknowledgement
-            byte[] buffer = new byte[Configuration.MAX_DATA_LENGTH];
-
             try {
                 //read the TFTP packet from the server
-                int read = is.read(buffer);
+                TFTPPacket response = readPadded(is);
 
-                if (read == -1) {
-                    throw new IOException("end of stream reached");
+                if (response instanceof ErrorPacket) {
+                    System.out.println("error: " + ((ErrorPacket) response).getMessage());
+                    return;
                 }
-
-                //convert server response to TFTP packet
-                TFTPPacket response = TFTPPacket.fromByteArray(buffer, read);
 
                 //should acknowledge the response from the server
                 if (!(response instanceof AcknowledgementPacket)) {
@@ -137,7 +162,7 @@ public class TFTPTCPClient extends GenericTFTPClient {
                 }
 
                 //server accepted WRQ - send file
-                FileSender.send(os, localFile);
+                TCPFileSender.send(os, localFile);
 
             } catch (IOException e) {
                 System.out.println("could not read server response: " + e.getMessage());
@@ -148,6 +173,14 @@ public class TFTPTCPClient extends GenericTFTPClient {
         } catch (IOException e) {
             System.out.println("could not create socket: " + e.getMessage());
         }
+    }
+
+    private TFTPPacket readPadded(InputStream is) throws IOException, TFTPException {
+        byte[] padded = new byte[Configuration.MAX_PACKET_LENGTH];
+        int read = is.read(padded, 0, padded.length);
+        if (read != Configuration.MAX_PACKET_LENGTH)
+            throw new TFTPException("packet not padded properly");
+        return TFTPPacket.fromByteArray(padded, Configuration.MAX_PACKET_LENGTH);
     }
 
     /**

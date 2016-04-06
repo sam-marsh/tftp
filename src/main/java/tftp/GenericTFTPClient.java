@@ -8,7 +8,12 @@ import java.nio.file.Paths;
 import java.util.Scanner;
 
 /**
- * @author Sam Marsh
+ * An abstract base class for a TFTP client. Provides a command-line interface to a TFTP client. The two methods
+ * {@link #get(String, String)} and {@link #put(String, String)} are overridden by the subclass to send/receive
+ * files from a TFTP server.
+ *
+ * @see tftp.udp.TFTPUDPClient
+ * @see tftp.tcp.TFTPTCPClient
  */
 public abstract class GenericTFTPClient extends Thread {
 

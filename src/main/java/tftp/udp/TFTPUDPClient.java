@@ -28,6 +28,12 @@ public class TFTPUDPClient extends GenericTFTPClient {
         super(port);
     }
 
+    /**
+     * Receives a file from the server using TFTP over UDP.
+     *
+     * @param remoteFile the path of the file on the server
+     * @param localFile the path of the file on the local machine
+     */
     @Override
     public void get(String remoteFile, String localFile) {
         try {
@@ -69,6 +75,12 @@ public class TFTPUDPClient extends GenericTFTPClient {
         }
     }
 
+    /**
+     * Sends a file to the server using the TFTP protocol over UDP.
+     *
+     * @param localFile the path of the file on the local machine
+     * @param remoteFile the path of the file on the server
+     */
     @Override
     public void put(String localFile, String remoteFile) {
         try {

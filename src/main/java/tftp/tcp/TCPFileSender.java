@@ -8,10 +8,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * @author Sam Marsh
+ * A utility class for sending a file over TCP.
  */
-public class FileSender {
-
+public class TCPFileSender {
 
     public static void send(OutputStream os, String fileName) {
         byte[] buffer = new byte[Configuration.MAX_DATA_LENGTH];

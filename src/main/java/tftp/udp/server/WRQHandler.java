@@ -18,7 +18,7 @@ import java.net.InetAddress;
  * A 'handler' for reading a file from a client (WRQ) and writing it to a disk. That is, this class is the
  * responder to write requests from the client.
  */
-public class ServerReader implements Runnable {
+public class WRQHandler implements Runnable {
 
     /**
      * The address of the client.
@@ -42,7 +42,7 @@ public class ServerReader implements Runnable {
      * @param clientPort the port of the client which sent the WRQ
      * @param wrq the write request received from the client
      */
-    public ServerReader(InetAddress clientAddress, int clientPort, WriteRequestPacket wrq) {
+    public WRQHandler(InetAddress clientAddress, int clientPort, WriteRequestPacket wrq) {
         this.clientAddress = clientAddress;
         this.clientPort = clientPort;
         this.wrq = wrq;
