@@ -1,32 +1,33 @@
-package tftp.udp.client;
+package tftp;
 
 import tftp.core.Configuration;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Paths;
 import java.util.Scanner;
 
 /**
- * A client for sending/receiving files from a server using the Trivial File Transfer Protocol.
- * Uses octet mode for all transfers.
+ * @author Sam Marsh
  */
-public class TFTPUDPClient extends Thread {
+public abstract class GenericTFTPClient extends Thread {
+
 
     /**
      * The address of the TFTP server.
      */
-    private InetAddress remoteAddress;
+    protected InetAddress remoteAddress;
 
     /**
      * The port of the TFTP server.
      */
-    private int remotePort;
+    protected int remotePort;
 
     /**
      * Creates a new TFTP client.
      */
-    public TFTPUDPClient() {
-        this.remotePort = Configuration.DEFAULT_SERVER_PORT;
+    public GenericTFTPClient(int port) {
+        this.remotePort = port;
     }
 
     /**
@@ -34,7 +35,7 @@ public class TFTPUDPClient extends Thread {
      * the command 'exit' is entered.
      */
     @Override
-    public void run() {
+    public final void run() {
         Scanner scanner = new Scanner(System.in);
 
         System.out.println("tftp client");
@@ -142,12 +143,14 @@ public class TFTPUDPClient extends Thread {
         // be null, which means the file is saved in the current working directory
         if (args.length >= 3) {
             localFile = args[2];
+        } else {
+            localFile = Paths.get(remoteFile).getFileName().toString();
         }
 
-        //start the read request handler with the user's specified parameters
-        ClientReceiver handler = new ClientReceiver(remoteAddress, remotePort, remoteFile, localFile);
-        handler.run();
+        get(remoteFile, localFile);
     }
+
+    protected abstract void get(String remoteFile, String localFile);
 
     /**
      * Attempts to write a file to the TFTP server with address set previously using
@@ -178,12 +181,14 @@ public class TFTPUDPClient extends Thread {
         // be null, which means the file is saved in the working directory of the server
         if (args.length >= 3) {
             remoteFile = args[2];
+        } else {
+            remoteFile = Paths.get(localFile).getFileName().toString();
         }
 
-        //start the write request handler with the user's specified parameters
-        ClientSender handler = new ClientSender(remoteAddress, remotePort, localFile, remoteFile);
-        handler.run();
+        put(localFile, remoteFile);
     }
+
+    protected abstract void put(String localFile, String remoteFile);
 
     /**
      * Sets the timeout timer length in milliseconds, used when reading/writing to the TFTP server.
@@ -214,16 +219,6 @@ public class TFTPUDPClient extends Thread {
         System.out.println("put local-path [remote-path]");
         System.out.println("timeout time-in-ms");
         System.out.println("exit");
-    }
-
-    /**
-     * The entry point of this TFTP client program.
-     *
-     * @param args the user arguments
-     */
-    public static void main(String[] args) {
-        Thread client = new TFTPUDPClient();
-        client.start();
     }
 
 }

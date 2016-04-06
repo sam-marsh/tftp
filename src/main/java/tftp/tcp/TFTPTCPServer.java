@@ -1,11 +1,9 @@
-package tftp.tcp.server;
+package tftp.tcp;
 
 import tftp.core.Configuration;
 import tftp.core.Mode;
 import tftp.core.TFTPException;
 import tftp.core.packet.*;
-import tftp.tcp.FileReceiver;
-import tftp.tcp.FileSender;
 
 import java.io.*;
 import java.net.ServerSocket;
