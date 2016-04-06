@@ -3,8 +3,6 @@ package tftp.core.packet;
 import tftp.core.Mode;
 import tftp.core.TFTPException;
 
-import java.nio.ByteBuffer;
-
 /**
  * Represents a write-request (WRQ) packet in the trivial file transfer protocol.
  */

@@ -2,10 +2,6 @@ package tftp.core.packet;
 
 import tftp.core.TFTPException;
 
-import java.nio.ByteBuffer;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-
 /**
  * This is a class to represent the different types of TFTP packets specified in the TFTP RFC.
  */

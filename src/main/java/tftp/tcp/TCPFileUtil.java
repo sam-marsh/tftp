@@ -1,7 +1,6 @@
 package tftp.tcp;
 
 import tftp.core.Configuration;
-import tftp.core.packet.AcknowledgementPacket;
 
 import java.io.*;
 import java.math.BigDecimal;

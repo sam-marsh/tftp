@@ -1,7 +1,6 @@
 package tftp.core.packet;
 
 import tftp.core.ErrorType;
-import tftp.core.TFTPException;
 import tftp.core.util.StringUtil;
 
 import java.nio.ByteBuffer;

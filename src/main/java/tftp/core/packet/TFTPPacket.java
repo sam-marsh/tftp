@@ -2,10 +2,7 @@ package tftp.core.packet;
 
 import tftp.core.TFTPException;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.WritableByteChannel;
 
 /**
  * A class that represents a generic TFTP packet.

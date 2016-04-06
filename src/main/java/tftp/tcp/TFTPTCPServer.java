@@ -184,7 +184,7 @@ public class TFTPTCPServer extends Thread {
      *
      * @param packet the packet to send to the client
      * @param os the output stream to the client
-     * @throws TFTPException if the packet could not be sent
+     * @throws IOException if the packet could not be sent
      */
     private void writePadded(TFTPPacket packet, OutputStream os) throws IOException {
         byte[] padded = new byte[Configuration.MAX_PACKET_LENGTH];
