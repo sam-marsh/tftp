@@ -34,7 +34,7 @@ public class FileSender {
     public static void send(DatagramSocket socket, TFTPPacket firstPacket, InetAddress remoteAddress,
                             int remotePort, FileInputStream fis, short firstBlockNumber) throws TFTPException {
 
-        //track the time taken and the number of bytes received to print at the end if all goes well
+        //track the time taken and the number of bytes sent to print at the end if all goes well
         long startTime = System.currentTimeMillis();
         int bytesSent = 0;
 
