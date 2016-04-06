@@ -41,7 +41,7 @@ In implementing the Trivial File Transfer Protocol, I attempted to abstract as m
 
 The \code{TFTPUDPServer} program takes two optional arguments: \code{-port port-number} to set the port to bind to and \code{-timeout time-in-ms} to set the timeout length - for example,
 \begin{center}
-\code{java tftp.udp.TFTPUDPServer -port 7000 -timeout 4000}.
+\code{java tftp.udp.server.TFTPUDPServer -port 7000 -timeout 4000}.
 \end{center}
 By default, the server binds to port 6009 and has a timeout of 3000ms.
 
