@@ -1,7 +1,3 @@
 \BOOKMARK [1][-]{section.1}{Core}{}% 1
 \BOOKMARK [1][-]{section.2}{UDP\040TFTP}{}% 2
-\BOOKMARK [2][-]{subsection.2.1}{Server}{section.2}% 3
-\BOOKMARK [2][-]{subsection.2.2}{Client}{section.2}% 4
-\BOOKMARK [1][-]{section.3}{TCP\040TFTP}{}% 5
-\BOOKMARK [2][-]{subsection.3.1}{Server}{section.3}% 6
-\BOOKMARK [2][-]{subsection.3.2}{Client}{section.3}% 7
+\BOOKMARK [1][-]{section.3}{TCP\040TFTP}{}% 3

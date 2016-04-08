@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import tftp.core.Mode;
 
 /**
  * A 'handler' for reading a file from a client (WRQ) and writing it to a disk. That is, this class is the
@@ -59,6 +60,13 @@ public class ServerWRQHandler implements Runnable {
             DatagramSocket socket = new DatagramSocket();
             socket.setSoTimeout(Configuration.TIMEOUT);
 
+            if (wrq.getMode() != Mode.OCTET) {
+                ErrorPacket error = new ErrorPacket(ErrorType.UNDEFINED, "unsupported mode: " + wrq.getMode());
+                socket.send(UDPUtil.toDatagram(error, clientAddress, clientPort));
+                System.out.println("unsupported mode: " + wrq.getMode());
+                return;
+            }
+            
             //open output stream to the file specified in the write request
             try (FileOutputStream fos = new FileOutputStream(wrq.getFileName())) {
 
