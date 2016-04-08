@@ -25,7 +25,7 @@ import java.net.*;
 public class TFTPUDPClient extends GenericTFTPClient {
 
     /**
-     * Creates a new TFTP client.
+     * {@inheritDoc}
      */
     public TFTPUDPClient(int port) {
         super(port);

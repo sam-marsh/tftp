@@ -27,6 +27,8 @@ public abstract class GenericTFTPClient extends Thread {
 
     /**
      * Creates a new TFTP client.
+     * 
+     * @param port the default port if none is specified by the user
      */
     public GenericTFTPClient(int port) {
         this.remotePort = port;

@@ -18,6 +18,8 @@
 \titlespacing\subsubsection{0pt}{2pt plus 4pt minus 2pt}{2pt plus 2pt minus 2pt}
 
 \newcommand{\code}{\texttt}
+\setlength{\parindent}{0cm}
+\setlength{\parskip}{0.5em}
 
 \title{\vspace{-5ex}Trivial File Transfer Protocol}
 \author{153728}
@@ -26,6 +28,7 @@
 \begin{document}
 \maketitle
 \vspace{-4ex}
+\noindent
 
 \begin{center}
 \includegraphics[width=0.5\textwidth]{image}
@@ -35,7 +38,7 @@
 
 In implementing the Trivial File Transfer Protocol, I attempted to abstract as much as possible so that a large amount of code could be shared between the client and server applications (in both the UDP version and the TCP version). So initially, I focused on translating the specifications of the TFTP to `Java representation'. The \code{tftp.core} package contains enums describing error types (e.g. \code{ErrorType.FILE\_NOT\_FOUND}), transfer modes (e.g. \code{Mode.OCTET}) and classes describing TFTP packets (e.g. \code{WriteRequestPacket} and \code{DataPacket}). Each of these TFTP packet classes inherit from a base class \code{TFTPPacket}. Each TFTPPacket subclass has two constructors - one for creating a new TFTPPacket from `logical data' (e.g. \code{new ErrorPacket(ErrorType.FILE\_NOT\_FOUND, "file")}), and another for parsing the packet from an array of bytes. Byte array parsing is done using a \code{ByteBuffer} wrapping the buffer. The parent class \code{TFTPPacket} contains a static method \code{fromByteArray} which takes a byte buffer (and length) and returns a \code{TFTPPacket}. This was done by examining the first two bytes (the opcode) of the packet and then, based on this opcode, instantiating the relevant \code{TFTPPacket} subclass.
 
-\section{UDP TFTP}
+\section{UDP}
 
 The \code{TFTPUDPServer} program takes two optional arguments: \code{-port port-number} to set the port to bind to and \code{-timeout time-in-ms} to set the timeout length - for example,
 \begin{center}
@@ -49,21 +52,24 @@ The two worker classes to respond to read and write requests are \code{ServerRRQ
 
 Upon running, the \code{ServerWRQHandler} creates a new datagram socket and binds it to a random free port.  A timeout is also specified based on the server configuration. Then the transfer mode of the RRQ packet is checked - if not \code{Mode.OCTET} then an error packet is sent to the client and the server worker terminates. If the mode is octet however, an input stream is opened to the file specified by the client (if the file does not exist, an error packet is sent to the client and the transfer terminates). Then an output stream is opened to the file specified in the received WRQ packet. A new byte array and datagram packet is created to hold received datagrams. The initial acknowledgement packet (block number of 0) is converted to a datagram using the \code{UDPUtil} class. This datagram is sent to the client. Immediately after sending, the method \code{ServerSocket\#receive(Datagram)} is called (blocking) to wait for a response from the client. If this is \textit{not} received within the timeout length, a variable called \code{timeouts} is incremented and the last datagram is resent. If the server times out 5 times in a row, the server gives up. However all going well, when the response is received it is converted into a TFTPPacket. Using \code{instanceof}, the type of the packet is checked - if it is an error packet, the error message is printed and the transfer is cancelled. If it is a data packet with the expected block number (kept track of with a local variable called \code{ackNumber}), the data contained in the packet is written to the file output stream. \code{ackNumber} is incremented. Then \code{DataPacket\#isFinalPacket()} is called - this method simply checks the length of the packet - if less than 512 bytes it is the final packet. If it is, the transfer is finished. If not, the server continues the loop by sending the current acknowledgement packet.
 
-The \code{ServerRRQHandler} works similarly. Note that write requests and read requests do almost the same thing - both read from some input and write that input to some output. As before, the \code{ServerRRQHandler} opens a socket, binds it, sets up the timeout, and checks the transfer mode. Then the file is read from the input stream in 512-byte chunks. This 512-byte chunk is encapsulated in a data packet, initially with a block number of 1. The TFTP packet is then `converted' to a datagram which is sent to the client. Using the same timeout method as described before, it waits for an acknowledgment of the correct packet from the receiver. Once received it increments the block number and continues the loop by again reading a chunk of 512 bytes from the file. The final packet is indicated by a less-than-512-byte data packet - once less than 512 bytes are read from the input file, it signals the last data packet. Once this packet is sent and the ack is received, the transfer is complete. A slight complication arises if the file is a multiple of 512 bytes long. As specified in the RFC, this is solved by sending a 0-byte final data packet. So this is checked in the implementation: if a read from the file returns -1 (signalling EOF), the length of the data packet to send is set to 0 in order to send an empty data packet.
+The \code{ServerRRQHandler} works similarly. Note that write requests and read requests do almost the same thing - both read from some input and write that input to some output. As before, the \code{ServerRRQHandler} opens a socket, binds it, sets up the timeout, and checks the transfer mode. Then the file is read from the input stream in 512-byte chunks. This 512-byte chunk is encapsulated in a data packet, initially with a block number of 1. The TFTP packet is then `converted' to a datagram which is sent to the client. Using the same timeout method as described before, it waits for an acknowledgment of the correct packet from the receiver. Once received it increments the block number and continues the loop by again reading a chunk of 512 bytes from the file. The final packet is indicated by a less-than-512-byte data packet - once less than 512 bytes are read from the input file, it signals the last data packet. Once this packet is sent and the acknowledgement is received, the transfer is complete. A complication arises if the file is a multiple of 512 bytes long. As specified in the RFC, this is resolved by sending a 0-byte final data packet. So in the implementation if a read from the file returns -1 (signalling EOF), the length of the data packet to send is set to 0 in order to send an empty data packet.
 
-After writing the server, the client was fairly straightforward because all code for transferring and receiving a file over TFTP had already been done. So most of the work developing the client involved coding the command line interface. My client is modelled after the OS X \code{tftp} program, a TFTP client bundled with OS X. As with the OS X program, entering `?' lists the available commands:
+After writing the server, the client was fairly straightforward because all code for transferring and receiving a file over TFTP had already been done. So most of the work developing the client involved coding the command line interface. My client is modelled after the OSX \code{tftp} program, a TFTP client bundled with OSX. As with the OSX program, entering `?' lists the available commands:
 \begin{itemize}
-\item \code{connect hostname [port]} sets the address of the TFTP server, and optionally the port. If no port is specified this will use the default port in this TFTP implementation, 6009. This is not connection in the TCP sense, but rather just sets the destination of outgoing datagrams.
-\item \code{get remote-path [local-path]} retrieves a file from the connected TFTP server. \code{remote-path} is the path to the file on the server, and \code{local-path} is the path to the file on the local machine. If \code{local-path} is not specified it the file is saved to the working directory. 
-\item \code{put local-path [remote-path]} writes a file to the connected TFTP server. \code{local-path} is the path to the file on the local machine, and \code{remote-path} is where the file will be saved on the server - if not specified, it will be in the server's working directory.
+\item \code{connect hostname [port]} sets the address and port of the TFTP server. If no port is specified port 6009 will be used. This is not connection in the TCP sense, but rather just sets the destination of outgoing datagrams.
+\item \code{get remote-path [local-path]} retrieves a file from the connected TFTP server. \code{remote-path} is the path to the file on the server. \code{local-path} is the path to the file on the local machine - if not specified the file is saved to the working directory. 
+\item \code{put local-path [remote-path]} writes a file to the connected TFTP server. \code{local-path} is the path to the file on the local machine, and \code{remote-path} is where the file will be saved on the server - by default in the server's working directory.
 \item \code{timeout time-in-ms} sets the timeout length in milliseconds.
 \item \code{exit} quits the client.
 \end{itemize}
 
-\section{TCP TFTP}
+As mentioned above, the code for client sending and receiving is similar to the code written for the server (but in reverse - i.e. for a RRQ the client reads and the server writes, for a WRQ the client writes and the server reads). As such, the shared code was abstracted into classes \code{FileReceiver} and \code{FileSender}: both the client and server use these. The only way that they differ is in the initial packet sent. The initial client packet sent is a RRQ/WRQ and the initial server packet sent is an ACK0/DATA1. So for a RRQ the client opens an output stream to the file, constructs the initial \code{ReadRequestPacket} and then proceeds as described in the server implementation above using \code{FileReceiver}. For a WRQ, it opens an input stream to the user-requested file (or prints an error if the file does not exist), constructs a \code{WriteRequestPacket}, and then uses \code{FileSender} to send the file to the server.
+ 
+\section{TCP}
 
 Since TCP provides a reliable transport service for the application layer, the explicit ACKs, timeout handling, etc. are not required in this case. Rather, the protocol can simply involve connecting the receiving a RRQ/WRQ, and then, upon `acceptance' of the request, a direct sending of the file bytes to/from the server. 
 
+\begin{minipage}[t]{.5\textwidth}
 The read request interaction:
 \begin{enumerate}
 \item client opens connection to server
@@ -72,7 +78,8 @@ The read request interaction:
 \item server sends file bytes to client
 \item after file is fully sent, server closes connection 
 \end{enumerate}
-
+\end{minipage}% <---------------- Note the use of "%"
+\begin{minipage}[t]{.5\textwidth}
 The write request interaction:
 \begin{enumerate}
 \item client opens connection to server
@@ -81,6 +88,7 @@ The write request interaction:
 \item client sends file bytes to server
 \item after file is fully sent, client closes connection
 \end{enumerate}
+\end{minipage}
 
 If the file does not exist, in step 3 the server will send back an error packet instead, containing an error message.
 
@@ -88,15 +96,17 @@ The server first opens a \code{ServerSocket} port on a particular port - by defa
 
 If the packet is a WRQ, the server sends an ACK to the client. Then the file is received by continually reading bytes from the input stream and writing them to file until the connection is closed by the client.
 
-If the packet is a RRQ, the server then sends an ACK to the client to indicate that the read request has been accepted (or, alternatively, an error packet if the file does not exist). The server then immediately opens an input stream to the requested file, and sends the file bytes over TCP. Once the sending is complete, the server closes the connection.
+If the packet is a RRQ, the server then sends an ACK to the client to indicate that the read request has been accepted (or an error packet if the file does not exist). The server then immediately opens an input stream to the requested file, and sends the file bytes over TCP. Once the sending is complete, the server closes the connection.
 
-The main difficulty in developing this protocol over TCP was that because TCP provides a continuous stream of bytes to the application layer, it is hard to tell where the server response packet ends and the file bytes begin. This is because the response packet from the server (either an acknowledgement packet or an error packet) is of variable length depending on what it is, and in the case of the error packet, what it contains - and so the client may read in file bytes accidentally after the TFTP packet without writing them to file. There are other ways to get around this, but the simple solution I took was to pad out the packet to \code{Configuration.MAX\_PACKET\_LENGTH} bytes long. Then it is certain that the file bytes start at offset \code{Configuration.MAX\_PACKET\_LENGTH}.
+The main difficulty in developing this protocol over TCP was that because TCP provides a continuous stream of bytes to the application layer, it is hard to tell where the server response packet ends and the file bytes begin. The response packet from the server (either an acknowledgement packet or an error packet) is of variable length depending on what it is and what error text it may contain - and so the client may read in file bytes while incorrectly interpreting them as TFTP packet bytes. There are other ways to get around this, but the simple solution I took was to pad out the packet to \code{Configuration.MAX\_PACKET\_LENGTH} bytes long. Then it is certain that the file bytes start at offset \code{Configuration.MAX\_PACKET\_LENGTH}.
 
-The client uses the same structure as the UDP TFTP client, supporting the same commands. The only subtlety is with the \code{connect} command - similarly to the UDP client this does not mean connect in the TCP sense, rather it just sets the server's hostname and port. A separate TCP connection is initiated with every \code{get} and \code{put}.
+The client uses the same structure as the UDP TFTP client, supporting the same commands. The only subtlety is with the \code{connect} command - as with the UDP client this does not mean connect in the TCP sense, rather it just sets the server's hostname and port. A separate TCP connection is initiated with every \code{get} and \code{put}.
 
-A \code{get} operation causes a \code{ReadRequestPacket} with the appropriate filename to be sent to the server. Then the client simply receives the file bytes from the server and writes them to file. Once the transfer is complete the server will terminate the TCP connection and the \code{get} operation is complete.
+A \code{get} operation causes a \code{ReadRequestPacket} with the appropriate filename to be sent to the server. Then the client simply receives the file bytes from the server and writes them to file. Once the transfer is complete the server will terminate the TCP connection.
 
 A \code{put} operation causes a \code{WriteRequestPacket} to be sent to the server. The client then waits for an \code{AcknowledgementPacket} to be received from the server. Once received, the client sends the file bytes to the server and closes the connection. 
+
+This implementation supports the error packet \code{ErrorType.FILE\_NOT\_FOUND} by the client checking the initial response to the request - if it is of type \code{AcknowledgementPacket} the data is sent/received, but if it is of type \code{ErrorPacket} then the contained error message is printed to the output.
 
 \end{document}
 
