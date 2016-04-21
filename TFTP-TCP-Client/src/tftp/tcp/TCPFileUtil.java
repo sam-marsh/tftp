@@ -88,7 +88,7 @@ public class TCPFileUtil {
         double seconds = (double) time / 1000.0;
         BigDecimal bigDecimal = new BigDecimal(seconds);
         bigDecimal = bigDecimal.setScale(1, BigDecimal.ROUND_UP);
-        System.out.printf("sent %d bytes in %s seconds%n", bytesReceived, bigDecimal.toPlainString());
+        System.out.printf("received %d bytes in %s seconds%n", bytesReceived, bigDecimal.toPlainString());
     }
 
 }
