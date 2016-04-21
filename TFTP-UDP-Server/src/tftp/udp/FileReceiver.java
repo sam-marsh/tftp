@@ -137,7 +137,7 @@ public class FileReceiver {
 
                     } else if (packet instanceof ErrorPacket) {
                         //received error packet from remote host, so print the message and terminate
-                        System.out.println("error packet received: " + packet);
+                        System.out.println("error: " + ((ErrorPacket) packet).getMessage());
                         return;
                     }
 

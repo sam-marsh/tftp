@@ -42,7 +42,7 @@ public class TFTPUDPClient extends GenericTFTPClient {
         try {
             DatagramSocket socket = new DatagramSocket();
             socket.setSoTimeout(Configuration.TIMEOUT);
-
+            
             //open an output stream to the local file
             try (FileOutputStream fos = new FileOutputStream(localFile)) {
 

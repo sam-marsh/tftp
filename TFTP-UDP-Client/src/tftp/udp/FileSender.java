@@ -149,7 +149,7 @@ public class FileSender {
 
                     } else if (received instanceof ErrorPacket) {
                         //received error packet from remote host, so print the message and terminate
-                        System.out.println("error packet received: " + received);
+                        System.out.println("error: " + ((ErrorPacket) received).getMessage());
                         return;
                     }
 
