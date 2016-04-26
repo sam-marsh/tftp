@@ -110,6 +110,6 @@ A \code{put} operation causes a \code{WriteRequestPacket} to be sent to the serv
 
 This implementation supports the error packet \code{ErrorType.FILE\_NOT\_FOUND} by the client checking the initial response to the request - if it is of type \code{AcknowledgementPacket} the data is sent/received, but if it is of type \code{ErrorPacket} then the error is printed to the output.
 
-The TCTP implementation also supports files of any size (trivially, since this is handed off to the TCP protocol without the manual use of block numbers like in the UDP version).
+The TCP implementation also supports files of any size (trivially, since this is handed off to the TCP protocol without the manual use of block numbers like in the UDP version).
 \end{document}
 
