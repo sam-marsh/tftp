@@ -94,21 +94,22 @@ The write request interaction:
 
 If the file does not exist, in step 3 the server will send back an error packet instead, containing an error message.
 
-The server first opens a \code{ServerSocket} port on a particular port (default 6009). The server then blocks until a client connects. When a client connects, a job is submitted to an \code{Executor} to be executed asynchronously - this job is in charge of responding to the client request. The first read from the socket input stream is interpreted as a request packet. The transfer mode of the request packet is ensured to be \code{octet}.
+The server first opens a \code{ServerSocket} port on a particular port (default 6009). The server then blocks until a client connects. When a client connects, a job is submitted to an \code{Executor} to be executed asynchronously - this job responds to the client request. The first read from the socket input stream is interpreted as a request packet. The transfer mode of the request packet is ensured to be \code{octet}.
 
-If the packet is a WRQ, the server sends an ACK to the client. Then the file is received by continually reading bytes from the input stream and writing them to file until the connection is closed by the client.
+If the packet is a WRQ, the server sends an ACK to the client. Then the file is received by reading bytes from the input stream and writing them to file until the connection is closed by the client.
 
-If the packet is a RRQ, the server then sends an ACK to the client to indicate that the read request has been accepted (or an error packet if the file does not exist). The server then opens an input stream to the requested file, and sends the file bytes over TCP. Once the sending is complete, the server closes the connection.
+If a RRQ, the server then sends an ACK to the client to indicate that the read request has been accepted (or an error packet if the file does not exist). The server then opens an input stream to the file, and sends the bytes over TCP. Once sending is complete, the connection is closed.
 
-A difficulty in developing this protocol over TCP was that because TCP provides a continuous stream of bytes to the application layer, it is hard to tell where the server response packet ends and the file bytes begin. The response packet from the server (either an acknowledgement packet or an error packet) is of variable length depending on what it is and what error text it may contain - and so the client may read in file bytes while incorrectly interpreting them as TFTP packet bytes. There are other ways to get around this, but the simple solution I took was to pad out the packet to \code{Configuration.MAX\_PACKET\_LENGTH} bytes long. Then it is certain that the file bytes start at offset \code{Configuration.MAX\_PACKET\_LENGTH}.
+A difficulty in developing this protocol over TCP was that because TCP provides a continuous stream of bytes to the application layer, it is hard to tell where the server response packet ends and the file bytes begin. The response packet from the server (either an acknowledgement packet or an error packet) is of variable length depending on what it is and what error text it may contain - and so the client may read in file bytes while interpreting them as TFTP packet bytes. There are other ways to get around this, but the simple solution I took was to pad out the packet to \code{Configuration.MAX\_PACKET\_LENGTH} bytes long. Then it is certain that the file bytes start at offset \code{Configuration.MAX\_PACKET\_LENGTH}.
 
 The client uses the same structure as the UDP TFTP client, supporting identical commands. The only subtlety is with the \code{connect} command - as with the UDP client this does not mean connect in the TCP sense, it just sets the server's hostname and port. A separate TCP connection is initiated with every \code{get} and \code{put}.
 
-A \code{get} operation causes a \code{ReadRequestPacket} with the appropriate filename to be sent to the server. Then the client receives the file bytes from the server and writes them to file. Once the transfer is complete the server terminates the TCP connection.
+A \code{get} operation causes a \code{ReadRequestPacket} with the appropriate filename to be sent to the server. Then the client receives the file bytes from the server and writes them to file. After transferring is complete the server terminates the TCP connection.
 
-A \code{put} operation causes a \code{WriteRequestPacket} to be sent to the server. The client then waits for an \code{AcknowledgementPacket} to be received from the server. Once received, the client sends the file bytes to the server and closes the connection. 
+A \code{put} operation causes a \code{WriteRequestPacket} to be sent to the server. The client then waits for an \code{AcknowledgementPacket} to be received from the server. Then the client sends the file bytes to the server and closes the connection. 
 
-This implementation supports the error packet \code{ErrorType.FILE\_NOT\_FOUND} by the client checking the initial response to the request - if it is of type \code{AcknowledgementPacket} the data is sent/received, but if it is of type \code{ErrorPacket} then the contained error message is printed to the output.
+This implementation supports the error packet \code{ErrorType.FILE\_NOT\_FOUND} by the client checking the initial response to the request - if it is of type \code{AcknowledgementPacket} the data is sent/received, but if it is of type \code{ErrorPacket} then the error is printed to the output.
 
+The TCTP implementation also supports files of any size (trivially, since this is handed off to the TCP protocol without the manual use of block numbers like in the UDP version).
 \end{document}
 
