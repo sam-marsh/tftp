@@ -29,7 +29,7 @@ public class FileSender {
      * @param remotePort the port on the remote host to send datagrams to
      * @param fis the file input stream to read from, which is sent to the remote host
      * @param firstBlockNumber the initial block number - this differs depending on whether it is a client or server
-     * @throws TFTPException if an 'unfixable' error occured during transfer
+     * @throws TFTPException if an 'unfixable' error occurred during transfer
      */
     public static void send(DatagramSocket socket, TFTPPacket firstPacket, InetAddress remoteAddress,
                             int remotePort, FileInputStream fis, short firstBlockNumber) throws TFTPException {
@@ -45,6 +45,9 @@ public class FileSender {
         byte[] receiveBuffer = new byte[Configuration.MAX_PACKET_LENGTH];
         //a buffer for holding the data read from the file
         byte[] fileBuffer = new byte[Configuration.MAX_DATA_LENGTH];
+        
+        //to check if we're sending the initial packet since this differs between server and client
+        boolean first = true;
 
         //the current block number being sent - waiting for acknowledgement of this block
         short blockNumber = firstBlockNumber;
@@ -60,7 +63,7 @@ public class FileSender {
 
             //generally will be sending data, but the first packet is different (could be WRQ or DATA1)
             // so check which ack we're up to and set the packet to send accordingly
-            if (blockNumber == firstBlockNumber) {
+            if (first) {
                 sendPacket = firstPacket;
                 if (firstPacket instanceof DataPacket) {
                     lastLength = ((DataPacket) firstPacket).getDataLength();
@@ -144,6 +147,7 @@ public class FileSender {
                             }
                             //ready to send the next packet - break out of the loop
                             ++blockNumber;
+                            first = false;
                             break;
                         }
 

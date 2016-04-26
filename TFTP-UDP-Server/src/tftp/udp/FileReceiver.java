@@ -28,12 +28,12 @@ public class FileReceiver {
      * @param remoteAddress the address of the remote host to send datagrams to
      * @param remotePort the port on the remote host to send datagrams to
      * @param fos the file output stream to write the received data to
-     * @throws TFTPException if an 'unfixable' error occured during transfer
+     * @throws TFTPException if an 'unfixable' error occurred during transfer
      */
     public static void receive(
             DatagramSocket socket, TFTPPacket firstPacket, InetAddress remoteAddress,
             int remotePort, FileOutputStream fos) throws TFTPException {
-
+        
         //track the time taken and the number of bytes received to print at the end if all goes well
         long startTime = System.currentTimeMillis();
         int bytesReceived = 0;
@@ -47,6 +47,9 @@ public class FileReceiver {
         //a datagram object to hold received datagrams
         DatagramPacket rcvDatagram = new DatagramPacket(rcvBuffer, rcvBuffer.length);
 
+        //to check if we're sending the initial packet since this differs between server and client
+        boolean first = true;
+
         //the acknowledgement number - currently acknowlegding the data packet with this block number
         short ackNumber = 0;
 
@@ -54,8 +57,8 @@ public class FileReceiver {
         while (true) {
 
             //generally will be sending acks, but the first packet is different (could be ACK0 or RRQ)
-            // so check which ack we're up to and set the packet to send accordingly
-            if (ackNumber == 0) {
+            // so set the packet to send accordingly
+            if (first) {
                 sendPacket = firstPacket;
             } else {
                 sendPacket = new AcknowledgementPacket(ackNumber);
@@ -101,19 +104,20 @@ public class FileReceiver {
                         ++invalids;
                         continue;
                     }
-
+                    
                     if (packet instanceof DataPacket) {
                         DataPacket data = (DataPacket) packet;
 
                         //packet has correct block number, we are waiting on this pcaket
-                        if (data.getBlockNumber() == ackNumber + 1) {
+                        if (data.getBlockNumber() == (short) (ackNumber + 1)) {
                             //write the data received in the data packet to the file
                             fos.write(data.getPacketBytes(), DataPacket.DATA_OFFSET, data.getDataLength());
                             //increment the number of bytes successfully received
                             bytesReceived += data.getDataLength();
                             //now we are waiting on the packet with block number (ackNumber + 1)
                             ++ackNumber;
-
+                            first = false;
+                            
                             //if this is the final packet, send an acknowledgement, print information about the
                             // transfer, and finish
                             if (data.isFinalPacket()) {
@@ -121,6 +125,8 @@ public class FileReceiver {
                                 datagram = UDPUtil.toDatagram(sendPacket, remoteAddress, remotePort);
                                 socket.send(datagram);
 
+                                System.out.println(data);
+                                
                                 long time = System.currentTimeMillis() - startTime;
                                 double seconds = (double) time / 1000.0;
                                 BigDecimal bigDecimal = new BigDecimal(seconds);
